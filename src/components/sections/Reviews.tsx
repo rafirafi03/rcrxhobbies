@@ -1,0 +1,27 @@
+"use client";
+
+import SectionHeading from "@/components/ui/SectionHeading";
+import ReviewCard from "@/components/ui/ReviewCard";
+import { reviews } from "@/data/reviews";
+
+export default function Reviews() {
+  const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+
+  return (
+    <section id="reviews" className="bg-accent-light/30 py-24 lg:py-32">
+      <div className="page-container">
+        <SectionHeading
+          label="Testimonials"
+          title="Voices of Excellence"
+          description={`${avgRating.toFixed(1)} average rating from ${reviews.length}+ enthusiasts across India.`}
+        />
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {reviews.map((review, i) => (
+            <ReviewCard key={review.id} review={review} index={i} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
