@@ -51,10 +51,18 @@ export interface GalleryItem {
 
 export interface ReelItem {
   id: string;
-  thumbnail: string;
   title: string;
-  views: string;
-  videoUrl: string;
+  /** Optional manual play/view count when Instagram does not expose it publicly */
+  viewCount?: number;
+  /** Optional fallback label when live view count is unavailable */
+  views?: string;
+  /** Paste Instagram reel or post URL — plays inline on the website */
+  reelUrl: string;
+  /** Optional manual cover image (auto-fetched from Instagram when omitted) */
+  thumbnail?: string;
+  /** Optional direct MP4/WebM URL (used when reelUrl is not Instagram) */
+  videoUrl?: string;
+  /** Link for "View on Instagram" (defaults to reelUrl) */
   instagramUrl?: string;
 }
 
