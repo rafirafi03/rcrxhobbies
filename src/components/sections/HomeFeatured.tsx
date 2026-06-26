@@ -1,6 +1,7 @@
 import ProductCard from "@/components/ui/ProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import InstagramReels from "@/components/sections/InstagramReels";
+import FAQ from "@/components/sections/FAQ";
 import { getFeaturedProducts } from "@/lib/products";
 
 export default function HomeFeatured() {
@@ -43,6 +44,7 @@ export default function HomeFeatured() {
       </section>
 
       <InstagramReels variant="home" />
+      <FAQ />
     </>
   );
 }

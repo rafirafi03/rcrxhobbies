@@ -1,153 +1,154 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { SlidersHorizontal, LayoutGrid, List } from "lucide-react";
+import Link from "next/link";
+import { Grid3x3 } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { filterProducts, getCategories, getPriceRange } from "@/lib/products";
-import { SORT_OPTIONS } from "@/lib/constants";
-import type { ShopFilters, SortOption } from "@/types";
+import ProductListToolbar from "@/components/shop/ProductListToolbar";
+import ShopFiltersPanel, { countActiveFilters } from "@/components/shop/ShopFiltersPanel";
+import ShopFilterDrawer from "@/components/shop/ShopFilterDrawer";
+import { filterProducts, getCategories, getPriceRange, getCategoriesPath } from "@/lib/products";
+import type { ShopFilters } from "@/types";
 
-export default function ShopContent() {
-  const searchParams = useSearchParams();
-  const priceRange = getPriceRange();
-  const categories = ["All", ...getCategories()];
-
-  const [filters, setFilters] = useState<ShopFilters>({
+function buildDefaultFilters(priceRange: { min: number; max: number }): ShopFilters {
+  return {
     category: "All",
     minPrice: priceRange.min,
     maxPrice: priceRange.max,
     inStockOnly: false,
     search: "",
     sort: "featured",
-  });
+  };
+}
+
+export default function ShopContent() {
+  const searchParams = useSearchParams();
+  const priceRange = getPriceRange();
+  const categories = ["All", ...getCategories()];
+
+  const [filters, setFilters] = useState<ShopFilters>(() => buildDefaultFilters(priceRange));
+  const [draftFilters, setDraftFilters] = useState<ShopFilters>(() => buildDefaultFilters(priceRange));
   const [view, setView] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const activeFilterCount = countActiveFilters(filters, priceRange);
 
   useEffect(() => {
     const q = searchParams.get("q");
     const cat = searchParams.get("category");
-    if (q) setFilters((f) => ({ ...f, search: q }));
-    if (cat) setFilters((f) => ({ ...f, category: cat }));
+    if (q || cat) {
+      setFilters((f) => ({
+        ...f,
+        ...(q ? { search: q } : {}),
+        ...(cat ? { category: cat } : {}),
+      }));
+    }
   }, [searchParams]);
 
   const products = useMemo(() => filterProducts(filters), [filters]);
 
+  const openFilters = useCallback(() => {
+    setDraftFilters(filters);
+    setFiltersOpen(true);
+  }, [filters]);
+
+  const applyFilters = useCallback(() => {
+    setFilters(draftFilters);
+    setFiltersOpen(false);
+  }, [draftFilters]);
+
+  const clearFilters = useCallback(() => {
+    const defaults = buildDefaultFilters(priceRange);
+    setDraftFilters((f) => ({ ...defaults, search: f.search, sort: f.sort }));
+  }, [priceRange]);
+
+  const clearAllFilters = useCallback(() => {
+    const defaults = buildDefaultFilters(priceRange);
+    setFilters(defaults);
+    setDraftFilters(defaults);
+  }, [priceRange]);
+
   return (
     <div className="bg-white">
       <div className="border-b border-border bg-accent-light/20">
-        <div className="page-container py-10 lg:py-12">
-          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Shop" }]} />
-          <h1 className="luxury-heading mt-4 text-4xl sm:text-5xl">All Products</h1>
-          <p className="mt-3 max-w-lg text-muted">Browse our complete collection of premium RC machines.</p>
+        <div className="page-container py-4 sm:py-8 lg:py-12">
+          <div className="hidden sm:block">
+            <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Shop" }]} />
+          </div>
+          <div className="flex items-center justify-between gap-3 sm:mt-4">
+            <h1 className="luxury-heading text-xl sm:text-3xl lg:text-5xl">All Products</h1>
+            <Link
+              href={getCategoriesPath()}
+              className="tap-target inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-border bg-white p-2 text-foreground transition-colors hover:border-accent hover:text-accent sm:rounded-full sm:px-4 sm:py-2"
+              aria-label="Browse categories"
+            >
+              <Grid3x3 className="h-4 w-4" />
+              <span className="hidden text-sm font-medium sm:inline">Categories</span>
+            </Link>
+          </div>
+          <p className="mt-2 hidden max-w-lg text-sm text-muted sm:block sm:text-base">
+            Browse our complete collection of premium RC machines.
+          </p>
         </div>
       </div>
 
-      <div className="page-container py-10 lg:py-14">
-
-        <div className="flex flex-col gap-8 lg:flex-row">
-          <aside className={`lg:w-64 lg:shrink-0 ${filtersOpen ? "block" : "hidden lg:block"}`}>
-            <div className="space-y-8 border border-border p-6">
-              <div>
-                <h3 className="mb-4 text-[0.6875rem] font-semibold tracking-[0.15em] text-accent uppercase">
-                  Category
-                </h3>
-                <ul className="space-y-2">
-                  {categories.map((cat) => (
-                    <li key={cat}>
-                      <button
-                        onClick={() => setFilters((f) => ({ ...f, category: cat }))}
-                        className={`text-sm transition-colors ${
-                          filters.category === cat
-                            ? "font-semibold text-accent"
-                            : "text-muted hover:text-foreground"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+      <div className="page-container py-4 lg:py-14">
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+          <aside className="hidden lg:block lg:w-64 lg:shrink-0">
+            <div className="sticky top-28 rounded-2xl border border-border bg-white p-6 shadow-sm">
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground">Filters</h2>
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="text-xs font-medium text-accent hover:underline"
+                  >
+                    Clear all
+                  </button>
+                )}
               </div>
-
-              <div>
-                <h3 className="mb-4 text-[0.6875rem] font-semibold tracking-[0.15em] text-accent uppercase">
-                  Price Range
-                </h3>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    value={filters.minPrice}
-                    onChange={(e) => setFilters((f) => ({ ...f, minPrice: Number(e.target.value) }))}
-                    className="w-full border border-border px-3 py-2 text-sm outline-none focus:border-accent"
-                  />
-                  <span className="text-muted">—</span>
-                  <input
-                    type="number"
-                    value={filters.maxPrice}
-                    onChange={(e) => setFilters((f) => ({ ...f, maxPrice: Number(e.target.value) }))}
-                    className="w-full border border-border px-3 py-2 text-sm outline-none focus:border-accent"
-                  />
-                </div>
-              </div>
-
-              <label className="flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={filters.inStockOnly}
-                  onChange={(e) => setFilters((f) => ({ ...f, inStockOnly: e.target.checked }))}
-                  className="h-4 w-4 accent-accent"
-                />
-                <span className="text-sm text-muted">In stock only</span>
-              </label>
+              <ShopFiltersPanel
+                filters={filters}
+                categories={categories}
+                priceRange={priceRange}
+                onChange={setFilters}
+                variant="sidebar"
+              />
             </div>
           </aside>
 
-          <div className="flex-1">
-            <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
-              <p className="text-sm text-muted">
-                {products.length} product{products.length !== 1 ? "s" : ""}
-              </p>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setFiltersOpen(!filtersOpen)}
-                  className="flex items-center gap-2 text-sm text-muted lg:hidden"
-                >
-                  <SlidersHorizontal className="h-4 w-4" /> Filters
-                </button>
-                <select
-                  value={filters.sort}
-                  onChange={(e) => setFilters((f) => ({ ...f, sort: e.target.value as SortOption }))}
-                  className="border border-border bg-white px-4 py-2.5 text-sm outline-none focus:border-accent"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <div className="hidden items-center border border-border sm:flex">
-                  <button onClick={() => setView("grid")} className={`p-2.5 ${view === "grid" ? "bg-accent text-white" : "text-muted"}`}>
-                    <LayoutGrid className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => setView("list")} className={`p-2.5 ${view === "list" ? "bg-accent text-white" : "text-muted"}`}>
-                    <List className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="min-w-0 flex-1">
+            <ProductListToolbar
+              count={products.length}
+              sort={filters.sort}
+              onSortChange={(sort) => setFilters((f) => ({ ...f, sort }))}
+              view={view}
+              onViewChange={setView}
+              onFiltersClick={openFilters}
+              activeFilterCount={activeFilterCount}
+              searchQuery={filters.search || undefined}
+              onClearFilters={clearAllFilters}
+            />
 
             {products.length === 0 ? (
-              <div className="py-24 text-center">
-                <p className="luxury-heading text-2xl">No products found</p>
+              <div className="rounded-2xl border border-dashed border-border py-16 text-center sm:py-20">
+                <p className="luxury-heading text-xl sm:text-2xl">No products found</p>
+                <p className="mt-2 text-sm text-muted">Try adjusting your filters or search term.</p>
+                <button type="button" onClick={clearAllFilters} className="luxury-btn-outline mt-6">
+                  Reset Filters
+                </button>
               </div>
             ) : view === "grid" ? (
-              <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-6 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-3">
                 {products.map((product, i) => (
                   <ProductCard key={product.id} product={product} index={i} />
                 ))}
               </div>
             ) : (
-              <div>
+              <div className="space-y-3 sm:space-y-4">
                 {products.map((product, i) => (
                   <ProductCard key={product.id} product={product} index={i} variant="list" />
                 ))}
@@ -156,6 +157,19 @@ export default function ShopContent() {
           </div>
         </div>
       </div>
+
+      <ShopFilterDrawer
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        filters={filters}
+        draftFilters={draftFilters}
+        categories={categories}
+        priceRange={priceRange}
+        onDraftChange={setDraftFilters}
+        onApply={applyFilters}
+        onClear={clearFilters}
+        activeCount={countActiveFilters(draftFilters, priceRange)}
+      />
     </div>
   );
 }

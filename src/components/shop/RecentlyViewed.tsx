@@ -26,7 +26,7 @@ export default function RecentlyViewed({
   return (
     <section className="border-t border-border py-16">
       <SectionHeading label="Continue Browsing" title={title} align="left" />
-      <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-6 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4">
         {products.map((product, i) => (
           <ProductCard key={product!.id} product={product!} index={i} />
         ))}

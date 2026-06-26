@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { LayoutGrid, List } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { getProductsByCategorySlug } from "@/lib/products";
-import { SORT_OPTIONS } from "@/lib/constants";
+import ProductListToolbar from "@/components/shop/ProductListToolbar";
+import { getProductsByCategorySlug, getCategoriesPath } from "@/lib/products";
 import type { SortOption } from "@/types";
 
 interface CategoryPageProps {
@@ -20,11 +21,16 @@ function sortList<T extends { price: number; name: string; rating: number }>(
 ): T[] {
   const sorted = [...list];
   switch (sort) {
-    case "price-asc": return sorted.sort((a, b) => a.price - b.price);
-    case "price-desc": return sorted.sort((a, b) => b.price - a.price);
-    case "name-asc": return sorted.sort((a, b) => a.name.localeCompare(b.name));
-    case "rating": return sorted.sort((a, b) => b.rating - a.rating);
-    default: return sorted;
+    case "price-asc":
+      return sorted.sort((a, b) => a.price - b.price);
+    case "price-desc":
+      return sorted.sort((a, b) => b.price - a.price);
+    case "name-asc":
+      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    case "rating":
+      return sorted.sort((a, b) => b.rating - a.rating);
+    default:
+      return sorted;
   }
 }
 
@@ -44,64 +50,54 @@ export default function CategoryPageContent({
   return (
     <div className="bg-white">
       <div className="border-b border-border bg-accent-light/20">
-        <div className="page-container py-10 lg:py-12">
-          <Breadcrumbs
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Shop", href: "/shop" },
-              { label: name },
-            ]}
-          />
-          <p className="luxury-label mt-4">Category</p>
-          <h1 className="luxury-heading mt-2 text-4xl sm:text-5xl">{name}</h1>
-          <p className="mt-3 max-w-lg text-muted">{description}</p>
+        <div className="page-container py-4 sm:py-8 lg:py-12">
+          <div className="hidden sm:block">
+            <Breadcrumbs
+              items={[
+                { label: "Home", href: "/" },
+                { label: "Shop", href: "/shop" },
+                { label: "Categories", href: getCategoriesPath() },
+                { label: name },
+              ]}
+            />
+          </div>
+          <p className="luxury-label mt-0 text-xs sm:mt-4">Category</p>
+          <h1 className="luxury-heading mt-1 text-xl sm:mt-2 sm:text-3xl lg:text-5xl">{name}</h1>
+          <p className="mt-2 hidden max-w-lg text-sm text-muted sm:block sm:text-base">
+            {description}
+          </p>
         </div>
       </div>
 
-      <div className="page-container py-10 lg:py-14">
-        <div className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
-          <p className="text-sm text-muted">
-            {products.length} product{products.length !== 1 ? "s" : ""}
-          </p>
-          <div className="flex items-center gap-4">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortOption)}
-              className="border border-border bg-white px-4 py-2.5 text-sm outline-none focus:border-accent"
-            >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            <div className="hidden items-center border border-border sm:flex">
-              <button
-                onClick={() => setView("grid")}
-                className={`p-2.5 ${view === "grid" ? "bg-accent text-white" : "text-muted"}`}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setView("list")}
-                className={`p-2.5 ${view === "list" ? "bg-accent text-white" : "text-muted"}`}
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="page-container py-4 lg:py-14">
+        <ProductListToolbar
+          count={products.length}
+          sort={sort}
+          onSortChange={setSort}
+          view={view}
+          onViewChange={setView}
+          extraLink={{ href: getCategoriesPath(), label: "All categories" }}
+        />
 
         {products.length === 0 ? (
-          <div className="py-24 text-center">
-            <p className="luxury-heading text-2xl">No products in this category yet</p>
+          <div className="rounded-2xl border border-dashed border-border py-16 text-center sm:py-20">
+            <p className="luxury-heading text-xl sm:text-2xl">No products in this category yet</p>
+            <Link
+              href="/shop"
+              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+            >
+              Browse all products
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         ) : view === "grid" ? (
-          <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-6 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-3 xl:grid-cols-4">
             {products.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}
           </div>
         ) : (
-          <div>
+          <div className="space-y-3 sm:space-y-4">
             {products.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} variant="list" />
             ))}

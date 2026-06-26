@@ -113,3 +113,11 @@ export function getProductPath(id: string): string {
 export function getCategoryPath(slug: string): string {
   return `/category/${slug}`;
 }
+
+export function getCategoriesPath(): string {
+  return "/categories";
+}
+
+export function getCategoryProductCount(slug: string): number {
+  return getProductsByCategorySlug(slug).length;
+}

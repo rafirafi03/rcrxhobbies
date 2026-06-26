@@ -9,6 +9,7 @@ function isShopActive(pathname: string) {
   return (
     pathname === "/shop" ||
     pathname.startsWith("/shop/") ||
+    pathname === "/categories" ||
     pathname.startsWith("/category/") ||
     pathname.startsWith("/products/")
   );

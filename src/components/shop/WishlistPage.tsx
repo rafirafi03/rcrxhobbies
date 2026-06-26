@@ -31,7 +31,7 @@ export default function WishlistPage() {
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Wishlist" }]} />
       <h1 className="luxury-heading mb-2 text-4xl">Wishlist</h1>
       <p className="mb-10 text-sm text-muted">{products.length} saved item{products.length !== 1 ? "s" : ""}</p>
-      <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-6 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((product, i) => (
           <ProductCard key={product!.id} product={product!} index={i} />
         ))}

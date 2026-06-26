@@ -60,12 +60,16 @@ function ReelCard({
   isPlaying,
   onPlay,
   onStop,
+  emphasizeActive = true,
+  className = "",
 }: {
   reel: ReelItem;
   isActive: boolean;
   isPlaying: boolean;
   onPlay: () => void;
   onStop: () => void;
+  emphasizeActive?: boolean;
+  className?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [media, setMedia] = useState<ReelMedia>({
@@ -146,12 +150,19 @@ function ReelCard({
   return (
     <motion.article
       variants={reelCardVariants}
-      animate={{
-        scale: isActive || isPlaying ? 1 : 0.88,
-        opacity: isActive || isPlaying ? 1 : 0.45,
-      }}
+      animate={
+        emphasizeActive
+          ? {
+              scale: isActive || isPlaying ? 1 : 0.88,
+              opacity: isActive || isPlaying ? 1 : 0.45,
+            }
+          : { scale: 1, opacity: 1 }
+      }
       transition={{ duration: 0.35, ease: reelEase }}
-      className="w-[11.5rem] shrink-0 snap-center sm:w-[12.5rem]"
+      className={
+        className ||
+        (emphasizeActive ? "w-[11.5rem] shrink-0 snap-center sm:w-[12.5rem]" : "w-full")
+      }
     >
       <div
         className={`group relative aspect-[9/16] overflow-hidden rounded-2xl bg-slate-900 shadow-sm ring-1 ring-black/10 transition-shadow duration-300 md:hover:shadow-md ${
@@ -300,7 +311,39 @@ const loopItems = Array.from({ length: LOOP_COPIES }, (_, copy) =>
   reels.map((reel) => ({ reel, copy, key: `${copy}-${reel.id}` }))
 ).flat();
 
-function ReelsCarousel({
+function ReelsDesktopRow({
+  playingId,
+  onPlay,
+  onStop,
+}: {
+  playingId: string | null;
+  onPlay: (id: string) => void;
+  onStop: () => void;
+}) {
+  return (
+    <motion.div
+      className="hidden gap-5 lg:grid lg:grid-cols-3 xl:grid-cols-5"
+      variants={reelListVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.15 }}
+    >
+      {reels.map((reel) => (
+        <ReelCard
+          key={reel.id}
+          reel={reel}
+          isActive={false}
+          emphasizeActive={false}
+          isPlaying={playingId === reel.id}
+          onPlay={() => onPlay(reel.id)}
+          onStop={onStop}
+        />
+      ))}
+    </motion.div>
+  );
+}
+
+function ReelsMobileCarousel({
   playingId,
   onPlay,
   onStop,
@@ -421,7 +464,7 @@ function ReelsCarousel({
   );
 
   return (
-    <div className="relative">
+    <div className="relative lg:hidden">
       <motion.div
         ref={scrollRef}
         className="-mx-4 flex items-center gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth px-4 pb-3 pt-1 snap-x snap-mandatory scrollbar-none touch-pan-x sm:-mx-6 sm:gap-4 sm:px-6 md:-mx-0 md:px-0"
@@ -498,7 +541,12 @@ export default function InstagramReels({ variant = "page" }: InstagramReelsProps
           />
         )}
 
-        <ReelsCarousel
+        <ReelsMobileCarousel
+          playingId={playingId}
+          onPlay={setPlayingId}
+          onStop={() => setPlayingId(null)}
+        />
+        <ReelsDesktopRow
           playingId={playingId}
           onPlay={setPlayingId}
           onStop={() => setPlayingId(null)}
