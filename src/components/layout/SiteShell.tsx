@@ -10,7 +10,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     <>
       <AnnouncementBar />
       <Header />
-      <main className="min-h-screen pb-24 lg:pb-0">{children}</main>
+      <main className="min-h-screen pb-20 lg:pb-0">{children}</main>
       <Footer />
       <BottomNav />
       <FloatingActions />
