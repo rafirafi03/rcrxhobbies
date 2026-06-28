@@ -65,7 +65,7 @@ export default function HeroBanner() {
   };
 
   return (
-    <section className="bg-white pt-3 pb-2 sm:pt-4 sm:pb-3">
+    <section className="bg-white pb-2 pt-3 sm:pb-3 sm:pt-4">
       <div className="page-container">
         <div
           className="relative overflow-hidden rounded-xl border border-border bg-slate-100 shadow-sm"

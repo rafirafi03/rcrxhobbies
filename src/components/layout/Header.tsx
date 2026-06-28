@@ -46,10 +46,24 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-border bg-white shadow-sm">
-        <div className="page-container flex items-center justify-between gap-3 py-3">
-          {/* Logo — icon only on mobile */}
-          <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={SITE_CONFIG.name}>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent">
+        <div className="page-container flex items-center gap-3 py-3 lg:justify-between">
+          {/* Mobile menu — left */}
+          <button
+            onClick={() => setMenuOpen((open) => !open)}
+            className="tap-target flex items-center justify-center rounded-lg p-2 text-foreground active:bg-accent-light lg:hidden"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+
+          {/* Logo */}
+          <Link
+            href="/"
+            className="flex min-w-0 flex-1 items-center justify-center gap-2.5 lg:flex-none lg:justify-start"
+            aria-label={SITE_CONFIG.name}
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
               <span className="text-xs font-bold text-white">RC</span>
             </div>
             <div className="hidden min-w-0 lg:block">
@@ -78,7 +92,7 @@ export default function Header() {
           </nav>
 
           {/* Actions */}
-          <div className="flex shrink-0 items-center">
+          <div className="flex shrink-0 items-center lg:gap-0">
             <button
               onClick={() => setSearchOpen(true)}
               className="tap-target flex items-center justify-center rounded-lg p-2 text-muted active:bg-accent-light active:text-accent"
@@ -88,7 +102,7 @@ export default function Header() {
             </button>
             <Link
               href="/wishlist"
-              className="tap-target relative flex items-center justify-center rounded-lg p-2 text-muted active:bg-accent-light active:text-accent"
+              className="tap-target relative hidden items-center justify-center rounded-lg p-2 text-muted hover:text-foreground lg:flex"
               aria-label="Wishlist"
             >
               <Heart className="h-5 w-5" />
@@ -100,7 +114,7 @@ export default function Header() {
             </Link>
             <button
               onClick={() => setCartOpen(true)}
-              className="tap-target relative flex items-center justify-center rounded-lg p-2 text-muted active:bg-accent-light active:text-accent"
+              className="tap-target relative hidden items-center justify-center rounded-lg p-2 text-muted hover:text-foreground lg:flex"
               aria-label="Cart"
             >
               <ShoppingBag className="h-5 w-5" />
@@ -111,7 +125,6 @@ export default function Header() {
               )}
             </button>
 
-            {/* WhatsApp — desktop header only (hidden below lg) */}
             <Link
               href={getWhatsAppChatUrl()}
               target="_blank"
@@ -120,16 +133,6 @@ export default function Header() {
             >
               WhatsApp
             </Link>
-
-            {/* Hamburger — mobile & tablet only */}
-            <button
-              onClick={() => setMenuOpen((open) => !open)}
-              className="tap-target ml-0.5 flex items-center justify-center rounded-lg p-2 text-foreground active:bg-accent-light lg:hidden"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={menuOpen}
-            >
-              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
           </div>
         </div>
       </header>
@@ -149,11 +152,11 @@ export default function Header() {
               aria-label="Close menu"
             />
             <motion.aside
-              initial={{ x: "100%" }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="fixed top-0 right-0 z-[56] flex h-full w-[min(100%,20rem)] flex-col bg-white shadow-xl lg:hidden"
+              className="fixed top-0 left-0 z-[56] flex h-full w-[min(100%,20rem)] flex-col bg-white shadow-xl lg:hidden"
               style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
               <div className="flex items-center justify-between border-b border-border px-4 py-3">

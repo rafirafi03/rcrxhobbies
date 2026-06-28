@@ -10,7 +10,20 @@ import ProductListToolbar from "@/components/shop/ProductListToolbar";
 import ShopFiltersPanel, { countActiveFilters } from "@/components/shop/ShopFiltersPanel";
 import ShopFilterDrawer from "@/components/shop/ShopFilterDrawer";
 import { filterProducts, getCategories, getPriceRange, getCategoriesPath } from "@/lib/products";
-import type { ShopFilters } from "@/types";
+import type { ShopFilters, SortOption } from "@/types";
+
+const SORT_OPTIONS: SortOption[] = [
+  "featured",
+  "price-asc",
+  "price-desc",
+  "name-asc",
+  "rating",
+  "newest",
+];
+
+function isSortOption(value: string): value is SortOption {
+  return SORT_OPTIONS.includes(value as SortOption);
+}
 
 function buildDefaultFilters(priceRange: { min: number; max: number }): ShopFilters {
   return {
@@ -38,11 +51,14 @@ export default function ShopContent() {
   useEffect(() => {
     const q = searchParams.get("q");
     const cat = searchParams.get("category");
-    if (q || cat) {
+    const sort = searchParams.get("sort");
+
+    if (q || cat || (sort && isSortOption(sort))) {
       setFilters((f) => ({
         ...f,
         ...(q ? { search: q } : {}),
         ...(cat ? { category: cat } : {}),
+        ...(sort && isSortOption(sort) ? { sort } : {}),
       }));
     }
   }, [searchParams]);

@@ -60,6 +60,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     (r) => r.product === product.name || r.productId === product.id
   );
 
+  const whatsAppUrl = getWhatsAppChatUrl(
+    `Hi, I'm interested in ${product.name} (${product.sku})`
+  );
+
   const syncGalleryScroll = useCallback(() => {
     const gallery = galleryRef.current;
     if (!gallery) return;
@@ -91,7 +95,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const categoryPath = getCategoryPath(categoryToSlug(product.category));
 
   return (
-    <div className="bg-white pb-32 lg:pb-0">
+    <div className="overflow-x-hidden bg-white pb-[calc(9.5rem+env(safe-area-inset-bottom))] lg:pb-0">
       {/* Desktop breadcrumbs */}
       <div className="hidden border-b border-border bg-accent-light/20 lg:block">
         <div className="page-container py-4">
@@ -130,7 +134,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           {product.images.map((img, i) => (
             <div
               key={i}
-              className="relative aspect-[4/5] w-full min-w-full shrink-0 snap-center sm:aspect-square"
+              className="relative aspect-square w-full min-w-full shrink-0 snap-center"
             >
               <AppImage
                 src={img}
@@ -149,7 +153,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             <div className="absolute right-3 bottom-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
               {selectedImage + 1} / {product.images.length}
             </div>
-            <div className="flex justify-center gap-1.5 py-3">
+            <div className="flex justify-center gap-1.5 py-2.5">
               {product.images.map((_, i) => (
                 <button
                   key={i}
@@ -167,7 +171,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       </div>
 
       <div className="page-container py-4 sm:py-6 lg:py-14">
-        <div className="grid gap-8 lg:grid-cols-12 lg:gap-14">
+        <div className="grid gap-6 lg:grid-cols-12 lg:gap-14">
           {/* Desktop gallery */}
           <div className="hidden lg:col-span-7 lg:block">
             <motion.div
@@ -205,7 +209,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </div>
 
           {/* Product info */}
-          <div className="lg:col-span-5">
+          <div className="min-w-0 lg:col-span-5">
             <div className="lg:sticky lg:top-28">
               <Link
                 href={categoryPath}
@@ -216,7 +220,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               </Link>
 
               <div className="mt-2 flex items-start justify-between gap-3">
-                <h1 className="luxury-heading text-xl leading-tight text-foreground sm:text-2xl lg:text-4xl">
+                <h1 className="luxury-heading text-xl leading-snug break-words text-foreground sm:text-2xl lg:text-4xl">
                   {product.name}
                 </h1>
                 <WishlistButton
@@ -225,7 +229,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 />
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                 <div className="flex items-center gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
@@ -239,16 +243,18 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     {product.rating} ({product.reviewCount})
                   </span>
                 </div>
-                <span className="text-xs text-muted-light">SKU: {product.sku}</span>
+                <span className="w-full text-xs text-muted-light sm:w-auto">
+                  SKU: {product.sku}
+                </span>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="text-2xl font-bold text-foreground sm:text-3xl">
+              <div className="mt-3 flex flex-wrap items-baseline gap-2">
+                <span className="text-2xl font-bold text-foreground">
                   {formatPrice(product.price)}
                 </span>
                 {product.originalPrice && (
                   <>
-                    <span className="text-base text-muted-light line-through">
+                    <span className="text-sm text-muted-light line-through sm:text-base">
                       {formatPrice(product.originalPrice)}
                     </span>
                     <span className="rounded-md bg-accent px-2 py-0.5 text-xs font-bold text-white">
@@ -276,33 +282,9 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 )}
               </div>
 
-              <p className="mt-4 text-sm leading-relaxed text-muted sm:text-[0.9375rem]">
+              <p className="mt-4 hidden text-sm leading-relaxed text-muted sm:text-[0.9375rem] lg:block">
                 {product.description}
               </p>
-
-              {product.inStock && (
-                <>
-                  <div className="mt-5 flex items-center justify-between rounded-xl border border-border bg-neutral-50 px-4 py-3 lg:hidden">
-                    <span className="text-sm font-medium text-foreground">Quantity</span>
-                    <QuantitySelector
-                      value={quantity}
-                      onChange={setQuantity}
-                      max={product.stockCount}
-                      size="sm"
-                    />
-                  </div>
-
-                  <a
-                    href={getWhatsAppChatUrl(`Hi, I'm interested in ${product.name} (${product.sku})`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition-colors active:bg-emerald-100 lg:hidden"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Order on WhatsApp
-                  </a>
-                </>
-              )}
 
               {/* Desktop purchase box */}
               {product.inStock && (
@@ -344,7 +326,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     </div>
                   </div>
                   <a
-                    href={getWhatsAppChatUrl(`Hi, I'm interested in ${product.name} (${product.sku})`)}
+                    href={whatsAppUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-4 flex items-center justify-center gap-2 text-sm text-muted transition-colors hover:text-accent"
@@ -355,7 +337,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 </div>
               )}
 
-              <div className="mt-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none lg:mt-6 lg:grid lg:grid-cols-3 lg:gap-3 lg:overflow-visible lg:pb-0">
+              <div className="mt-4 grid grid-cols-3 gap-2 lg:mt-6 lg:gap-3">
                 {[
                   { icon: Truck, label: "Fast Delivery" },
                   { icon: Shield, label: "Genuine Parts" },
@@ -363,22 +345,21 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 ].map(({ icon: Icon, label }) => (
                   <div
                     key={label}
-                    className="flex min-w-[7.5rem] shrink-0 flex-col items-center gap-2 rounded-xl border border-border bg-white p-3 text-center lg:min-w-0"
+                    className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-white p-2.5 text-center sm:gap-2 sm:p-3"
                   >
                     <Icon className="h-4 w-4 text-accent" strokeWidth={1.5} />
-                    <span className="text-[0.625rem] leading-tight font-medium tracking-wide text-muted uppercase">
+                    <span className="text-[0.5625rem] leading-tight font-medium tracking-wide text-muted uppercase sm:text-[0.625rem]">
                       {label}
                     </span>
                   </div>
                 ))}
               </div>
-
             </div>
           </div>
         </div>
 
         {/* Details */}
-        <div className="mt-8 border-t border-border pt-8 lg:mt-16 lg:pt-16">
+        <div className="mt-6 border-t border-border pt-6 lg:mt-16 lg:pt-16">
           <div className="lg:hidden">
             <div className="grid grid-cols-3 gap-1 rounded-xl bg-neutral-100 p-1">
               {detailTabs.map((tab) => (
@@ -386,7 +367,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`rounded-lg py-2.5 text-center text-xs font-semibold transition-colors sm:text-sm ${
+                  className={`rounded-lg px-1 py-2.5 text-center text-[0.6875rem] font-semibold transition-colors sm:text-sm ${
                     activeTab === tab.id
                       ? "bg-white text-accent shadow-sm"
                       : "text-muted"
@@ -404,33 +385,36 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.2 }}
-                className="mt-5"
+                className="mt-4"
               >
                 {activeTab === "description" && (
-                  <p className="text-sm leading-[1.8] text-muted">{product.longDescription}</p>
+                  <div className="space-y-3">
+                    <p className="text-sm leading-relaxed text-foreground">{product.description}</p>
+                    <p className="text-sm leading-[1.8] text-muted">{product.longDescription}</p>
+                  </div>
                 )}
                 {activeTab === "specs" && (
                   <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
                     {product.specs.map((spec) => (
                       <li
                         key={spec}
-                        className="flex items-center justify-between gap-4 px-4 py-3.5 text-sm"
+                        className="flex items-start justify-between gap-3 px-3 py-3 text-sm sm:px-4 sm:py-3.5"
                       >
-                        <span className="text-muted">{spec}</span>
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                        <span className="min-w-0 flex-1 text-muted">{spec}</span>
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                       </li>
                     ))}
                   </ul>
                 )}
                 {activeTab === "features" && (
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-2">
                     {product.features.map((f) => (
                       <li
                         key={f}
-                        className="flex items-start gap-3 rounded-xl border border-border bg-white p-3.5 text-sm text-muted"
+                        className="flex items-start gap-2.5 rounded-xl border border-border bg-white p-3 text-sm text-muted sm:gap-3 sm:p-3.5"
                       >
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                        {f}
+                        <span className="min-w-0 flex-1">{f}</span>
                       </li>
                     ))}
                   </ul>
@@ -488,9 +472,9 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         </div>
 
         {productReviews.length > 0 && (
-          <section className="mt-10 border-t border-border pt-10 lg:mt-16 lg:pt-16">
-            <h2 className="luxury-heading mb-5 text-lg sm:mb-8 sm:text-2xl">Customer Reviews</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
+          <section className="mt-8 border-t border-border pt-8 lg:mt-16 lg:pt-16">
+            <h2 className="luxury-heading mb-4 text-lg sm:mb-8 sm:text-2xl">Customer Reviews</h2>
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               {productReviews.map((review, i) => (
                 <ReviewCard key={review.id} review={review} index={i} />
               ))}
@@ -498,40 +482,62 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </section>
         )}
 
-        <RelatedProducts product={product} />
-        <RecentlyViewed excludeId={product.id} />
+        <div className="[&_section]:py-8 [&_section]:sm:py-12 [&_h2]:!text-xl [&_h2]:sm:!text-2xl [&_.mb-10]:!mb-6 [&_.mb-10]:sm:!mb-10">
+          <RelatedProducts product={product} />
+          <RecentlyViewed excludeId={product.id} />
+        </div>
       </div>
 
       {/* Mobile sticky purchase bar */}
       {product.inStock && (
         <div
-          className="fixed inset-x-0 bottom-16 z-40 border-t border-border bg-white shadow-[0_-8px_30px_rgba(15,23,42,0.12)] lg:hidden"
-          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+          className="fixed inset-x-0 bottom-16 z-40 border-t border-border bg-white/95 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur-md lg:hidden"
+          style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
         >
-          <div className="page-container py-3">
-            <div className="flex items-center gap-2.5">
-              <div className="shrink-0 pr-1">
-                <p className="text-base font-bold leading-tight text-foreground">
+          <div className="page-container space-y-2.5 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-lg font-bold leading-tight text-foreground">
                   {formatPrice(product.price)}
                 </p>
                 {product.originalPrice && (
-                  <p className="text-[0.6875rem] text-muted-light line-through">
+                  <p className="text-xs text-muted-light line-through">
                     {formatPrice(product.originalPrice)}
+                    <span className="ml-1.5 text-accent">-{discount}%</span>
                   </p>
                 )}
               </div>
+              <a
+                href={whatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tap-target flex shrink-0 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 active:bg-emerald-100"
+              >
+                <MessageCircle className="h-4 w-4 shrink-0" />
+                WhatsApp
+              </a>
+            </div>
+
+            <div className="flex min-w-0 items-center gap-2">
+              <QuantitySelector
+                value={quantity}
+                onChange={setQuantity}
+                max={product.stockCount}
+                size="sm"
+              />
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="luxury-btn-primary min-h-[2.75rem] flex-1 justify-center !py-3 !text-xs sm:!text-sm"
+                className="luxury-btn-primary min-h-[2.75rem] min-w-0 flex-1 justify-center !px-3 !py-2.5 !text-xs sm:!text-sm"
               >
                 {added ? (
                   <>
-                    <Check className="h-4 w-4" /> Added
+                    <Check className="h-4 w-4 shrink-0" />
+                    <span className="truncate">Added</span>
                   </>
                 ) : (
                   <>
-                    <ShoppingBag className="h-4 w-4" />
+                    <ShoppingBag className="h-4 w-4 shrink-0" />
                     <span className="truncate">Add to Cart</span>
                   </>
                 )}
@@ -539,9 +545,9 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               <Link
                 href="/checkout"
                 onClick={handleBuyNow}
-                className="luxury-btn-outline flex min-h-[2.75rem] shrink-0 items-center justify-center !border-accent !px-4 !py-3 !text-xs !text-accent sm:!text-sm"
+                className="luxury-btn-outline flex min-h-[2.75rem] shrink-0 items-center justify-center !border-accent !px-3 !py-2.5 !text-xs !text-accent sm:!px-4 sm:!text-sm"
               >
-                Buy Now
+                Buy
               </Link>
             </div>
           </div>

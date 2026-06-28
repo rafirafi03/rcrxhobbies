@@ -35,22 +35,4 @@ export const faqs: FAQItem[] = [
     answer:
       "Mini RC and ready-to-run on-road or off-road models are great starting points. Message us with your budget and whether you prefer indoor or outdoor use — we will recommend the best fit.",
   },
-  {
-    id: "parts",
-    question: "Do you sell spare parts and upgrades?",
-    answer:
-      "Yes. We stock genuine parts and popular upgrades for many models in our catalog. Share your car model or a photo on WhatsApp and we will help you find the right components.",
-  },
-  {
-    id: "returns",
-    question: "What is your return policy?",
-    answer:
-      "Unused items in original packaging may be eligible for return within 7 days of delivery, subject to inspection. Contact us on WhatsApp as soon as possible if something arrives damaged or incorrect.",
-  },
-  {
-    id: "store",
-    question: "Can I visit your store in Kochi?",
-    answer:
-      "Absolutely. Visit our Kochi store to see RC models in person, get hands-on advice, and pick up products. Check our Contact page for address and store hours.",
-  },
 ];

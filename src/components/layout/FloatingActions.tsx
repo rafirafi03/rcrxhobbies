@@ -1,11 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { Phone } from "lucide-react";
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { getPhoneUrl, getWhatsAppChatUrl } from "@/lib/whatsapp";
 
 export default function FloatingActions() {
+  const pathname = usePathname();
+  const hideOnProductPage = pathname.startsWith("/products/");
+
+  if (hideOnProductPage) return null;
+
   return (
     <>
       <motion.a
