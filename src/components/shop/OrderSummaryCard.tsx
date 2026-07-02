@@ -1,9 +1,9 @@
 "use client";
 
-import { formatPrice } from "@/lib/format";
-import type { OrderSummary } from "@/types";
-import { SITE_CONFIG } from "@/lib/constants";
-import { Card, CardBody } from "@/components/ui/Card";
+import { formatPrice } from "../../lib/format";
+import type { OrderSummary } from "../../types";
+import { useSiteConfig } from "../../context/SiteDataContext";
+import { Card, CardBody } from "../ui/Card";
 
 interface OrderSummaryCardProps {
   summary: OrderSummary;
@@ -14,6 +14,8 @@ export default function OrderSummaryCard({
   summary,
   showShippingNote = true,
 }: OrderSummaryCardProps) {
+  const site = useSiteConfig();
+
   return (
     <Card accentTop={false}>
       <CardBody>
@@ -40,7 +42,7 @@ export default function OrderSummaryCard({
       </dl>
       {showShippingNote && summary.shipping > 0 && (
         <p className="mt-4 text-xs text-muted">
-          Add {formatPrice(SITE_CONFIG.freeShippingThreshold - (summary.subtotal - summary.discount))} more for free shipping
+          Add {formatPrice(site.freeShippingThreshold - (summary.subtotal - summary.discount))} more for free shipping
         </p>
       )}
       </CardBody>

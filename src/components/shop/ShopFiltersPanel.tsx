@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import type { ShopFilters } from "@/types";
-import { formatPrice } from "@/lib/format";
+import type { ShopFilters } from "../../types";
+import { formatPrice } from "../../lib/format";
 
 interface ShopFiltersPanelProps {
   filters: ShopFilters;

@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
-import { useStore } from "@/context/StoreContext";
-import { getProductById } from "@/lib/products";
-import ProductCard from "@/components/ui/ProductCard";
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import { useStore } from "../../context/StoreContext";
+import { useSiteData } from "../../context/SiteDataContext";
+import { getProductById } from "../../lib/products";
+import ProductCard from "../ui/ProductCard";
+import Breadcrumbs from "../ui/Breadcrumbs";
 
 export default function WishlistPage() {
   const { wishlist } = useStore();
-  const products = wishlist.map((id) => getProductById(id)).filter(Boolean);
+  const { products: catalog } = useSiteData();
+  const products = wishlist.map((id) => getProductById(catalog, id)).filter(Boolean);
 
   if (products.length === 0) {
     return (

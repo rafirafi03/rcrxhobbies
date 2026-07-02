@@ -1,9 +1,10 @@
 "use client";
 
-import { useStore } from "@/context/StoreContext";
-import ProductCard from "@/components/ui/ProductCard";
-import { getProductById } from "@/lib/products";
-import SectionHeading from "@/components/ui/SectionHeading";
+import { useStore } from "../../context/StoreContext";
+import { useSiteData } from "../../context/SiteDataContext";
+import ProductCard from "../ui/ProductCard";
+import { getProductById } from "../../lib/products";
+import SectionHeading from "../ui/SectionHeading";
 
 interface RecentlyViewedProps {
   excludeId?: string;
@@ -15,9 +16,10 @@ export default function RecentlyViewed({
   title = "Recently Viewed",
 }: RecentlyViewedProps) {
   const { recentlyViewed } = useStore();
+  const { products: catalog } = useSiteData();
   const products = recentlyViewed
     .filter((id) => id !== excludeId)
-    .map((id) => getProductById(id))
+    .map((id) => getProductById(catalog, id))
     .filter(Boolean)
     .slice(0, 4);
 

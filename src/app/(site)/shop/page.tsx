@@ -1,5 +1,7 @@
 import { Suspense } from "react";
-import ShopContent from "@/components/shop/ShopContent";
+import ShopContent from "../../../components/shop/ShopContent";
+import { PageLoading } from "../../../components/ui/ContentState";
+import { loadSiteCatalog } from "../../../lib/sanity/queries";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,10 +9,12 @@ export const metadata: Metadata = {
   description: "Browse our full collection of premium RC cars. Filter, sort, and order via WhatsApp.",
 };
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  const catalog = await loadSiteCatalog();
+
   return (
-    <Suspense fallback={<div className="py-32 text-center text-muted">Loading shop...</div>}>
-      <ShopContent />
+    <Suspense fallback={<PageLoading label="Loading shop…" />}>
+      <ShopContent products={catalog.products} categories={catalog.categories} />
     </Suspense>
   );
 }

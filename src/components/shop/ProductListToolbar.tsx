@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
-import ViewToggle from "@/components/ui/ViewToggle";
-import SortDropdown from "@/components/ui/SortDropdown";
-import { SORT_OPTIONS } from "@/lib/constants";
-import type { SortOption } from "@/types";
+import ViewToggle from "../ui/ViewToggle";
+import SortDropdown from "../ui/SortDropdown";
+import { SORT_OPTIONS } from "../../lib/constants";
+import type { SortOption } from "../../types";
 
 interface ProductListToolbarProps {
   count: number;

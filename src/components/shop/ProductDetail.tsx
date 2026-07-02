@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag,
@@ -11,25 +12,25 @@ import {
   Truck,
   Shield,
   RotateCcw,
-  ArrowLeft,
   ChevronRight,
 } from "lucide-react";
-import type { Product } from "@/types";
-import { useStore } from "@/context/StoreContext";
-import ReviewCard from "@/components/ui/ReviewCard";
-import { formatPrice, calcDiscountPercent } from "@/lib/format";
-import { getWhatsAppChatUrl } from "@/lib/whatsapp";
-import { categoryToSlug, getCategoryPath } from "@/lib/products";
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import QuantitySelector from "@/components/ui/QuantitySelector";
-import WishlistButton from "@/components/ui/WishlistButton";
-import RelatedProducts from "@/components/shop/RelatedProducts";
-import RecentlyViewed from "@/components/shop/RecentlyViewed";
-import AppImage from "@/components/ui/AppImage";
-import { reviews } from "@/data/reviews";
+import type { Product, Review } from "../../types";
+import { useStore } from "../../context/StoreContext";
+import { useSiteConfig } from "../../context/SiteDataContext";
+import ReviewCard, { ReviewSummary } from "../ui/ReviewCard";
+import { formatPrice, calcDiscountPercent } from "../../lib/format";
+import { getWhatsAppChatUrl } from "../../lib/whatsapp";
+import { categoryToSlug, getCategoryPath } from "../../lib/products";
+import Breadcrumbs from "../ui/Breadcrumbs";
+import QuantitySelector from "../ui/QuantitySelector";
+import WishlistButton from "../ui/WishlistButton";
+import RelatedProducts from "./RelatedProducts";
+import RecentlyViewed from "./RecentlyViewed";
+import AppImage from "../ui/AppImage";
 
 interface ProductDetailProps {
   product: Product;
+  reviews: Review[];
 }
 
 type DetailTab = "description" | "specs" | "features";
@@ -40,13 +41,84 @@ const detailTabs: { id: DetailTab; label: string }[] = [
   { id: "features", label: "Features" },
 ];
 
-export default function ProductDetail({ product }: ProductDetailProps) {
+const purchaseBtnClass =
+  "luxury-btn-primary w-full min-h-[3rem] justify-center !px-4 !py-3 !text-sm";
+
+const buyNowBtnClass =
+  "luxury-btn-outline w-full min-h-[3rem] justify-center !border-primary !px-4 !py-3 !text-sm !text-primary hover:!bg-primary hover:!text-white";
+
+function ProductGallery({
+  product,
+  selectedImage,
+  onSelectImage,
+}: {
+  product: Product;
+  selectedImage: number;
+  onSelectImage: (index: number) => void;
+}) {
+  const activeImage = product.images[selectedImage] || product.image;
+
+  return (
+    <div className="min-w-0">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-neutral-50 sm:aspect-[5/4] lg:aspect-auto lg:h-80 xl:h-[22rem]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeImage}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0"
+          >
+            <AppImage
+              src={activeImage}
+              alt={product.name}
+              fill
+              priority
+              sizes="(max-width: 1024px) 92vw, 42vw"
+              className="object-contain"
+            />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {product.images.length > 1 && (
+        <div className="mt-3 w-full min-w-0">
+          <div className="flex gap-2.5 overflow-x-auto overscroll-x-contain px-0.5 py-1 scrollbar-none [-webkit-overflow-scrolling:touch]">
+            {product.images.map((img, i) => {
+              const isSelected = selectedImage === i;
+              return (
+                <button
+                  key={`${img}-${i}`}
+                  type="button"
+                  onClick={() => onSelectImage(i)}
+                  className={`relative block h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-neutral-100 transition-all sm:h-16 sm:w-16 ${
+                    isSelected
+                      ? "border-2 border-accent opacity-100 shadow-sm"
+                      : "border border-border opacity-70 hover:opacity-100"
+                  }`}
+                  aria-label={`View image ${i + 1}`}
+                  aria-pressed={isSelected}
+                >
+                  <AppImage src={img} alt="" fill sizes="64px" className="object-cover" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ProductDetail({ product, reviews }: ProductDetailProps) {
+  const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState<DetailTab>("description");
-  const galleryRef = useRef<HTMLDivElement>(null);
-  const { addToCart, addToRecentlyViewed } = useStore();
+  const { addToCart, buyNow, addToRecentlyViewed } = useStore();
+  const site = useSiteConfig();
 
   useEffect(() => {
     addToRecentlyViewed(product.id);
@@ -56,31 +128,18 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     ? calcDiscountPercent(product.price, product.originalPrice)
     : 0;
 
-  const productReviews = reviews.filter(
-    (r) => r.product === product.name || r.productId === product.id
-  );
+  const productReviews = reviews;
+  const reviewAverage =
+    productReviews.length > 0
+      ? productReviews.reduce((sum, review) => sum + review.rating, 0) / productReviews.length
+      : 0;
 
   const whatsAppUrl = getWhatsAppChatUrl(
+    site.whatsapp,
     `Hi, I'm interested in ${product.name} (${product.sku})`
   );
 
-  const syncGalleryScroll = useCallback(() => {
-    const gallery = galleryRef.current;
-    if (!gallery) return;
-
-    const slideWidth = gallery.clientWidth;
-    if (!slideWidth) return;
-
-    const index = Math.round(gallery.scrollLeft / slideWidth);
-    setSelectedImage(Math.min(index, product.images.length - 1));
-  }, [product.images.length]);
-
-  function scrollToImage(index: number) {
-    const gallery = galleryRef.current;
-    if (!gallery) return;
-    gallery.scrollTo({ left: index * gallery.clientWidth, behavior: "smooth" });
-    setSelectedImage(index);
-  }
+  const categoryPath = getCategoryPath(categoryToSlug(product.category));
 
   function handleAddToCart() {
     addToCart(product.id, quantity);
@@ -89,14 +148,12 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   }
 
   function handleBuyNow() {
-    addToCart(product.id, quantity);
+    buyNow(product.id, quantity);
+    router.push("/checkout");
   }
-
-  const categoryPath = getCategoryPath(categoryToSlug(product.category));
 
   return (
     <div className="overflow-x-hidden bg-white pb-[calc(9.5rem+env(safe-area-inset-bottom))] lg:pb-0">
-      {/* Desktop breadcrumbs */}
       <div className="hidden border-b border-border bg-accent-light/20 lg:block">
         <div className="page-container py-4">
           <Breadcrumbs
@@ -110,105 +167,16 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         </div>
       </div>
 
-      {/* Mobile gallery — full width, edge to edge */}
-      <div className="relative lg:hidden">
-        <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between">
-          <Link
-            href={categoryPath}
-            className="tap-target flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-foreground shadow-md backdrop-blur-sm"
-            aria-label="Back to category"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <WishlistButton
-            productId={product.id}
-            className="flex h-10 w-10 items-center justify-center rounded-full border-0 bg-white/95 shadow-md backdrop-blur-sm"
-          />
-        </div>
-
-        <div
-          ref={galleryRef}
-          onScroll={syncGalleryScroll}
-          className="scrollbar-none flex snap-x snap-mandatory overflow-x-auto bg-neutral-100"
-        >
-          {product.images.map((img, i) => (
-            <div
-              key={i}
-              className="relative aspect-square w-full min-w-full shrink-0 snap-center"
-            >
-              <AppImage
-                src={img}
-                alt={`${product.name} ${i + 1}`}
-                fill
-                priority={i === 0}
-                sizes="100vw"
-                className="object-cover"
-              />
-            </div>
-          ))}
-        </div>
-
-        {product.images.length > 1 && (
-          <>
-            <div className="absolute right-3 bottom-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              {selectedImage + 1} / {product.images.length}
-            </div>
-            <div className="flex justify-center gap-1.5 py-2.5">
-              {product.images.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => scrollToImage(i)}
-                  className={`h-1.5 rounded-full transition-all ${
-                    selectedImage === i ? "w-6 bg-accent" : "w-1.5 bg-border"
-                  }`}
-                  aria-label={`View image ${i + 1}`}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="page-container py-4 sm:py-6 lg:py-14">
+      <div className="page-container pb-4 pt-3 sm:pb-6 sm:pt-4 lg:py-14">
         <div className="grid gap-6 lg:grid-cols-12 lg:gap-14">
-          {/* Desktop gallery */}
-          <div className="hidden lg:col-span-7 lg:block">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="relative aspect-square overflow-hidden rounded-2xl bg-neutral-50 ring-1 ring-border"
-            >
-              <AppImage
-                src={product.images[selectedImage] || product.image}
-                alt={product.name}
-                fill
-                priority
-                sizes="58vw"
-                className="object-cover"
-              />
-            </motion.div>
-            {product.images.length > 1 && (
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setSelectedImage(i)}
-                    className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl ring-2 transition-all ${
-                      selectedImage === i
-                        ? "ring-accent"
-                        : "ring-transparent opacity-60 hover:opacity-100"
-                    }`}
-                  >
-                    <AppImage src={img} alt="" fill sizes="80px" className="object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="min-w-0 lg:col-span-7">
+            <ProductGallery
+              product={product}
+              selectedImage={selectedImage}
+              onSelectImage={setSelectedImage}
+            />
           </div>
 
-          {/* Product info */}
           <div className="min-w-0 lg:col-span-5">
             <div className="lg:sticky lg:top-28">
               <Link
@@ -225,7 +193,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 </h1>
                 <WishlistButton
                   productId={product.id}
-                  className="hidden h-11 w-11 shrink-0 rounded-full border border-border lg:flex"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border sm:h-11 sm:w-11"
                 />
               </div>
 
@@ -286,54 +254,34 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 {product.description}
               </p>
 
-              {/* Desktop purchase box */}
               {product.inStock && (
                 <div className="mt-8 hidden rounded-2xl border border-border bg-accent-light/30 p-6 lg:block">
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div>
-                      <p className="mb-2 text-[0.6875rem] tracking-[0.12em] text-muted uppercase">
-                        Quantity
-                      </p>
-                      <QuantitySelector
-                        value={quantity}
-                        onChange={setQuantity}
-                        max={product.stockCount}
-                      />
-                    </div>
-                    <div className="flex flex-1 flex-col gap-3 sm:flex-row">
-                      <button
-                        type="button"
-                        onClick={handleAddToCart}
-                        className="luxury-btn-primary flex-1 justify-center"
-                      >
-                        {added ? (
-                          <>
-                            <Check className="h-4 w-4" /> Added
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingBag className="h-4 w-4" /> Add to Cart
-                          </>
-                        )}
-                      </button>
-                      <Link
-                        href="/checkout"
-                        onClick={handleBuyNow}
-                        className="luxury-btn-outline flex-1 justify-center !border-accent !text-accent hover:!bg-accent hover:!text-white"
-                      >
-                        Buy Now
-                      </Link>
-                    </div>
+                  <div className="mb-4">
+                    <p className="mb-2 text-[0.6875rem] tracking-[0.12em] text-muted uppercase">
+                      Quantity
+                    </p>
+                    <QuantitySelector
+                      value={quantity}
+                      onChange={setQuantity}
+                      max={product.stockCount}
+                    />
                   </div>
-                  <a
-                    href={whatsAppUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 flex items-center justify-center gap-2 text-sm text-muted transition-colors hover:text-accent"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Order on WhatsApp instead
-                  </a>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button type="button" onClick={handleAddToCart} className={purchaseBtnClass}>
+                      {added ? (
+                        <>
+                          <Check className="h-4 w-4" /> Added
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag className="h-4 w-4" /> Add to Cart
+                        </>
+                      )}
+                    </button>
+                    <button type="button" onClick={handleBuyNow} className={buyNowBtnClass}>
+                      Buy Now
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -358,7 +306,6 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </div>
         </div>
 
-        {/* Details */}
         <div className="mt-6 border-t border-border pt-6 lg:mt-16 lg:pt-16">
           <div className="lg:hidden">
             <div className="grid grid-cols-3 gap-1 rounded-xl bg-neutral-100 p-1">
@@ -473,10 +420,16 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
         {productReviews.length > 0 && (
           <section className="mt-8 border-t border-border pt-8 lg:mt-16 lg:pt-16">
-            <h2 className="luxury-heading mb-4 text-lg sm:mb-8 sm:text-2xl">Customer Reviews</h2>
-            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-              {productReviews.map((review, i) => (
-                <ReviewCard key={review.id} review={review} index={i} />
+            <div className="mb-5 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="luxury-heading text-lg sm:text-2xl">Customer Reviews</h2>
+                <p className="mt-1 text-sm text-muted">What buyers are saying about this model</p>
+              </div>
+              <ReviewSummary rating={reviewAverage} count={productReviews.length} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {productReviews.map((review) => (
+                <ReviewCard key={review.id} review={review} variant="product" />
               ))}
             </div>
           </section>
@@ -488,7 +441,6 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         </div>
       </div>
 
-      {/* Mobile sticky purchase bar */}
       {product.inStock && (
         <div
           className="fixed inset-x-0 bottom-16 z-40 border-t border-border bg-white/95 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur-md lg:hidden"
@@ -518,37 +470,35 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               </a>
             </div>
 
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex items-center gap-2">
               <QuantitySelector
                 value={quantity}
                 onChange={setQuantity}
                 max={product.stockCount}
                 size="sm"
               />
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className="luxury-btn-primary min-h-[2.75rem] min-w-0 flex-1 justify-center !px-3 !py-2.5 !text-xs sm:!text-sm"
-              >
-                {added ? (
-                  <>
-                    <Check className="h-4 w-4 shrink-0" />
-                    <span className="truncate">Added</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag className="h-4 w-4 shrink-0" />
-                    <span className="truncate">Add to Cart</span>
-                  </>
-                )}
-              </button>
-              <Link
-                href="/checkout"
-                onClick={handleBuyNow}
-                className="luxury-btn-outline flex min-h-[2.75rem] shrink-0 items-center justify-center !border-accent !px-3 !py-2.5 !text-xs !text-accent sm:!px-4 sm:!text-sm"
-              >
-                Buy
-              </Link>
+              <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
+                <button type="button" onClick={handleAddToCart} className={`${purchaseBtnClass} !min-h-[2.75rem] !text-xs sm:!text-sm`}>
+                  {added ? (
+                    <>
+                      <Check className="h-4 w-4 shrink-0" />
+                      <span className="truncate">Added</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="h-4 w-4 shrink-0" />
+                      <span className="truncate">Add to Cart</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  className={`${buyNowBtnClass} !min-h-[2.75rem] !text-xs sm:!text-sm`}
+                >
+                  Buy Now
+                </button>
+              </div>
             </div>
           </div>
         </div>

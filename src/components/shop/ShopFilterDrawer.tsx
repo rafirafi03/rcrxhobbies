@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import type { ShopFilters } from "@/types";
-import ShopFiltersPanel from "@/components/shop/ShopFiltersPanel";
+import type { ShopFilters } from "../../types";
+import ShopFiltersPanel from "./ShopFiltersPanel";
 
 interface ShopFilterDrawerProps {
   open: boolean;

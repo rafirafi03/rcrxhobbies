@@ -1,19 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, X } from "lucide-react";
-import InstagramIcon from "@/components/ui/InstagramIcon";
-import SectionHeader from "@/components/ui/SectionHeader";
-import SectionHeading from "@/components/ui/SectionHeading";
-import { getReelPlayback } from "@/lib/reels";
-import { formatCompactCount } from "@/lib/format";
-import { reels, REELS_INSTAGRAM_PROFILE } from "@/data/reels";
-import type { ReelItem } from "@/types";
+import { Play, X, Loader2, Volume2, VolumeX, RotateCcw } from "lucide-react";
+import SectionHeader from "../ui/SectionHeader";
+import SectionHeading from "../ui/SectionHeading";
+import { getReelVideoSrc } from "../../lib/reels";
+import { formatCompactCount } from "../../lib/format";
+import type { ReelItem } from "../../types";
+import { EmptyState } from "../ui/ContentState";
 
-interface InstagramReelsProps {
+interface ReelsSectionProps {
   variant?: "home" | "page";
+  reels: ReelItem[];
 }
 
 interface ReelMedia {
@@ -28,10 +27,7 @@ const reelListVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.07,
-      delayChildren: 0.04,
-    },
+    transition: { staggerChildren: 0.07, delayChildren: 0.04 },
   },
 };
 
@@ -54,35 +50,211 @@ function formatViewLabel(
   return null;
 }
 
+function ReelPlayerModal({
+  reel,
+  poster,
+  onClose,
+}: {
+  reel: ReelItem;
+  poster?: string;
+  onClose: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [muted, setMuted] = useState(true);
+  const [showUnmuteHint, setShowUnmuteHint] = useState(true);
+
+  const videoSrc = useMemo(() => getReelVideoSrc(reel), [reel]);
+  const viewLabel = formatViewLabel(reel.viewCount ?? null, reel.viewCount, reel.views);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    setStatus(videoSrc ? "loading" : "error");
+    setMuted(true);
+    setShowUnmuteHint(true);
+  }, [videoSrc, attempt]);
+
+  const handleCanPlay = useCallback(() => {
+    setStatus("ready");
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    void video.play().catch(() => {
+      setStatus("error");
+    });
+  }, []);
+
+  const handleVideoError = useCallback(() => {
+    setStatus("error");
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const nextMuted = !video.muted;
+    video.muted = nextMuted;
+    setMuted(nextMuted);
+    if (!nextMuted) setShowUnmuteHint(false);
+    void video.play().catch(() => {});
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    setAttempt((n) => n + 1);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.22 }}
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/90 p-0 backdrop-blur-md sm:items-center sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Playing ${reel.title}`}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.97 }}
+        transition={{ duration: 0.3, ease: reelEase }}
+        className="relative flex w-full max-w-[min(100%,22rem)] flex-col overflow-hidden rounded-t-3xl bg-neutral-950 shadow-2xl ring-1 ring-white/10 sm:max-w-sm sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative aspect-[9/16] w-full overflow-hidden bg-black">
+          {poster ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={poster}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-2xl"
+            />
+          ) : null}
+
+          {status === "loading" && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/40 text-white">
+              <Loader2 className="h-9 w-9 animate-spin text-white" />
+              <p className="text-sm font-medium">Preparing video…</p>
+            </div>
+          )}
+
+          {status === "error" && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-black/70 px-8 text-center text-white">
+              <p className="text-base font-medium">Couldn&apos;t load this video</p>
+              <p className="text-sm text-white/65">Check your connection and try again.</p>
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900 transition-colors hover:bg-white/90"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Try again
+              </button>
+            </div>
+          )}
+
+          {videoSrc ? (
+            <video
+              ref={videoRef}
+              key={`${videoSrc}-${attempt}`}
+              src={videoSrc}
+              poster={poster}
+              playsInline
+              muted={muted}
+              controls
+              preload="auto"
+              className={`relative z-10 h-full w-full object-contain transition-opacity duration-300 ${
+                status === "ready" ? "opacity-100" : "opacity-0"
+              }`}
+              onCanPlay={handleCanPlay}
+              onLoadedData={handleCanPlay}
+              onError={handleVideoError}
+            />
+          ) : null}
+
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-black/70 to-transparent px-4 pb-10 pt-4">
+            <div className="pointer-events-auto flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-2 text-sm font-semibold leading-snug text-white">{reel.title}</p>
+                {viewLabel ? (
+                  <p className="mt-1 text-[0.6875rem] font-medium tracking-wide text-white/70 uppercase">
+                    {viewLabel}
+                  </p>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                aria-label="Close video"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {status === "ready" && muted && showUnmuteHint ? (
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="absolute bottom-20 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-neutral-900 shadow-lg transition-transform hover:scale-105"
+            >
+              <VolumeX className="h-3.5 w-3.5" />
+              Tap to unmute
+            </button>
+          ) : null}
+
+          {status === "ready" && !showUnmuteHint ? (
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="absolute bottom-20 right-4 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+              aria-label={muted ? "Unmute" : "Mute"}
+            >
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+          ) : null}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function ReelCard({
   reel,
   isActive,
-  isPlaying,
   onPlay,
-  onStop,
   emphasizeActive = true,
   className = "",
 }: {
   reel: ReelItem;
   isActive: boolean;
-  isPlaying: boolean;
-  onPlay: () => void;
-  onStop: () => void;
+  onPlay: (poster: string) => void;
   emphasizeActive?: boolean;
   className?: string;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [media, setMedia] = useState<ReelMedia>({
     thumbnailUrl: reel.thumbnail ?? null,
     videoUrl: reel.videoUrl ?? null,
     viewCount: reel.viewCount ?? null,
   });
   const [loading, setLoading] = useState(!reel.thumbnail);
-  const [pendingPlay, setPendingPlay] = useState(false);
 
-  const playback = getReelPlayback(reel, media.videoUrl);
   const thumbnail = media.thumbnailUrl ?? reel.thumbnail ?? "";
-  const videoSrc = playback?.type === "video" ? playback.src : null;
   const viewLabel = formatViewLabel(media.viewCount, reel.viewCount, reel.views);
 
   useEffect(() => {
@@ -107,55 +279,12 @@ function ReelCard({
     };
   }, [reel.reelUrl, reel.thumbnail, reel.videoUrl]);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !videoSrc) return;
-
-    if (isPlaying || pendingPlay) {
-      video.currentTime = 0;
-      void video.play().catch(() => {});
-      if (pendingPlay) setPendingPlay(false);
-    } else {
-      video.pause();
-      video.currentTime = 0;
-    }
-  }, [isPlaying, pendingPlay, videoSrc]);
-
-  const handleStop = useCallback(() => {
-    setPendingPlay(false);
-    onStop();
-  }, [onStop]);
-
-  const handlePlay = useCallback(() => {
-    if (videoSrc) {
-      onPlay();
-      requestAnimationFrame(() => {
-        const video = videoRef.current;
-        if (!video) return;
-        video.currentTime = 0;
-        void video.play().catch(() => {});
-      });
-      return;
-    }
-
-    onPlay();
-    if (playback?.type === "instagram") return;
-    setPendingPlay(true);
-  }, [onPlay, playback, videoSrc]);
-
-  const showVideo = Boolean((isPlaying || pendingPlay) && videoSrc);
-  const showEmbed = isPlaying && !videoSrc && playback?.type === "instagram";
-  const showOverlay = !(isPlaying || pendingPlay);
-
   return (
     <motion.article
       variants={reelCardVariants}
       animate={
         emphasizeActive
-          ? {
-              scale: isActive || isPlaying ? 1 : 0.88,
-              opacity: isActive || isPlaying ? 1 : 0.45,
-            }
+          ? { scale: isActive ? 1 : 0.88, opacity: isActive ? 1 : 0.45 }
           : { scale: 1, opacity: 1 }
       }
       transition={{ duration: 0.35, ease: reelEase }}
@@ -164,161 +293,63 @@ function ReelCard({
         (emphasizeActive ? "w-[11.5rem] shrink-0 snap-center sm:w-[12.5rem]" : "w-full")
       }
     >
-      <div
-        className={`group relative aspect-[9/16] overflow-hidden rounded-2xl bg-slate-900 shadow-sm ring-1 ring-black/10 transition-shadow duration-300 md:hover:shadow-md ${
-          isPlaying || pendingPlay ? "ring-2 ring-accent shadow-md" : ""
-        }`}
-      >
-        {videoSrc && (
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            poster={thumbnail || undefined}
-            playsInline
-            preload="metadata"
-            controls={showVideo}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-150 ${
-              showVideo ? "z-20 opacity-100" : "pointer-events-none z-0 opacity-0"
-            }`}
+      <div className="group relative aspect-[9/16] overflow-hidden rounded-2xl bg-slate-900 shadow-sm ring-1 ring-black/10 transition-shadow duration-300 md:hover:shadow-md">
+        {thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumbnail}
+            alt={reel.title}
+            className="h-full w-full object-cover md:transition-transform md:duration-500 md:group-hover:scale-105"
+            loading="lazy"
           />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-slate-800">
+            {loading ? (
+              <span className="h-8 w-8 animate-pulse rounded-full bg-slate-600" />
+            ) : (
+              <Play className="h-8 w-8 text-slate-500" />
+            )}
+          </div>
         )}
 
-        {showEmbed && (
-          <iframe
-            key={playback.embedUrl}
-            src={`${playback.embedUrl}?autoplay=1`}
-            title={reel.title}
-            className="absolute inset-0 z-20 h-full w-full border-0"
-            allowFullScreen
-            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-            scrolling="no"
-          />
-        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/25" />
 
-        <AnimatePresence>
-          {(isPlaying || pendingPlay) && (
-            <motion.button
-              key="close"
-              type="button"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
-              onClick={handleStop}
-              className="absolute top-2 right-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm"
-              aria-label="Close reel"
-            >
-              <X className="h-3.5 w-3.5" />
-            </motion.button>
-          )}
-        </AnimatePresence>
+        <button
+          type="button"
+          onClick={() => onPlay(thumbnail)}
+          className="absolute inset-0 z-10 flex items-center justify-center"
+          aria-label={`Play ${reel.title}`}
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-accent shadow-lg transition-transform group-hover:scale-105 sm:h-12 sm:w-12">
+            <Play className="ml-0.5 h-5 w-5 fill-current" />
+          </span>
+        </button>
 
-        <AnimatePresence mode="wait">
-          {showOverlay && (
-            <motion.div
-              key="overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25, ease: reelEase }}
-              className="absolute inset-0"
-            >
-              {thumbnail ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <motion.img
-                  src={thumbnail}
-                  alt={reel.title}
-                  className="h-full w-full object-cover md:transition-transform md:duration-500 md:group-hover:scale-105"
-                  loading="eager"
-                  initial={{ scale: 1.06 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.6, ease: reelEase }}
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-slate-800">
-                  {loading ? (
-                    <motion.span
-                      className="h-8 w-8 rounded-full bg-slate-600"
-                      animate={{ opacity: [0.4, 1, 0.4] }}
-                      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                  ) : (
-                    <InstagramIcon className="h-8 w-8 text-slate-500" />
-                  )}
-                </div>
-              )}
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/25" />
-
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08, duration: 0.3 }}
-                className="absolute top-2.5 left-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 shadow-sm"
-              >
-                <InstagramIcon className="h-3.5 w-3.5 text-foreground" />
-              </motion.div>
-
-              <button
-                type="button"
-                onClick={handlePlay}
-                disabled={!playback}
-                className="absolute inset-0 z-10 flex items-center justify-center disabled:cursor-not-allowed"
-                aria-label={`Play ${reel.title}`}
-              >
-                <motion.span
-                  whileHover={{ scale: 1.08 }}
-                  whileTap={{ scale: 0.92 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 22 }}
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-accent shadow-lg sm:h-12 sm:w-12"
-                >
-                  <Play className="ml-0.5 h-5 w-5 fill-current" />
-                </motion.span>
-              </button>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.12, duration: 0.35, ease: reelEase }}
-                className="pointer-events-none absolute inset-x-2.5 bottom-2.5 z-10"
-              >
-                <div className="mb-1 h-2.5">
-                  {viewLabel ? (
-                    <p className="text-[0.625rem] font-semibold tracking-wide text-white/90 uppercase">
-                      {viewLabel}
-                    </p>
-                  ) : loading ? (
-                    <span className="block h-2.5 w-14 rounded bg-white/30" />
-                  ) : null}
-                </div>
-                <p className="line-clamp-2 text-[0.6875rem] font-semibold leading-tight text-white sm:text-xs">
-                  {reel.title}
-                </p>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="pointer-events-none absolute inset-x-2.5 bottom-2.5 z-10">
+          <div className="mb-1 h-2.5">
+            {viewLabel ? (
+              <p className="text-[0.625rem] font-semibold tracking-wide text-white/90 uppercase">
+                {viewLabel}
+              </p>
+            ) : loading ? (
+              <span className="block h-2.5 w-14 rounded bg-white/30" />
+            ) : null}
+          </div>
+          <p className="line-clamp-2 text-[0.6875rem] font-semibold leading-tight text-white sm:text-xs">
+            {reel.title}
+          </p>
+        </div>
       </div>
     </motion.article>
   );
 }
 
-const REEL_COUNT = reels.length;
-const LOOP_COPIES = 3;
-const MIDDLE_START = REEL_COUNT;
-
-const loopItems = Array.from({ length: LOOP_COPIES }, (_, copy) =>
-  reels.map((reel) => ({ reel, copy, key: `${copy}-${reel.id}` }))
-).flat();
-
 function ReelsDesktopRow({
-  playingId,
+  reels,
   onPlay,
-  onStop,
 }: {
-  playingId: string | null;
-  onPlay: (id: string) => void;
-  onStop: () => void;
+  reels: ReelItem[];
+  onPlay: (reel: ReelItem, poster: string) => void;
 }) {
   return (
     <motion.div
@@ -334,9 +365,7 @@ function ReelsDesktopRow({
           reel={reel}
           isActive={false}
           emphasizeActive={false}
-          isPlaying={playingId === reel.id}
-          onPlay={() => onPlay(reel.id)}
-          onStop={onStop}
+          onPlay={(poster) => onPlay(reel, poster)}
         />
       ))}
     </motion.div>
@@ -344,49 +373,47 @@ function ReelsDesktopRow({
 }
 
 function ReelsMobileCarousel({
-  playingId,
+  reels,
   onPlay,
-  onStop,
 }: {
-  playingId: string | null;
-  onPlay: (id: string) => void;
-  onStop: () => void;
+  reels: ReelItem[];
+  onPlay: (reel: ReelItem, poster: string) => void;
 }) {
+  const REEL_COUNT = reels.length;
+  const LOOP_COPIES = 3;
+  const MIDDLE_START = REEL_COUNT;
+  const loopItems = Array.from({ length: LOOP_COPIES }, (_, copy) =>
+    reels.map((reel) => ({ reel, copy, key: `${copy}-${reel.id}` }))
+  ).flat();
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const jumpLockRef = useRef(false);
   const [activePhysicalIndex, setActivePhysicalIndex] = useState(MIDDLE_START);
   const activeLogicalIndex = activePhysicalIndex % REEL_COUNT;
 
-  const scrollToPhysicalIndex = useCallback(
-    (physicalIndex: number, smooth = false) => {
-      const track = scrollRef.current;
-      const item = itemRefs.current[physicalIndex];
-      if (!track || !item) return;
+  const scrollToPhysicalIndex = useCallback((physicalIndex: number, smooth = false) => {
+    const track = scrollRef.current;
+    const item = itemRefs.current[physicalIndex];
+    if (!track || !item) return;
 
-      const target =
-        item.offsetLeft - track.clientWidth / 2 + item.offsetWidth / 2;
-
-      jumpLockRef.current = !smooth;
-      track.scrollTo({ left: target, behavior: smooth ? "smooth" : "auto" });
-      if (!smooth) {
-        requestAnimationFrame(() => {
-          jumpLockRef.current = false;
-        });
-      }
-    },
-    []
-  );
+    const target = item.offsetLeft - track.clientWidth / 2 + item.offsetWidth / 2;
+    jumpLockRef.current = !smooth;
+    track.scrollTo({ left: target, behavior: smooth ? "smooth" : "auto" });
+    if (!smooth) {
+      requestAnimationFrame(() => {
+        jumpLockRef.current = false;
+      });
+    }
+  }, []);
 
   const reconcileLoop = useCallback(
     (physicalIndex: number) => {
-      // Keep one clone card on each side so peeking past the ends does not snap back.
       if (physicalIndex < REEL_COUNT - 1) {
         scrollToPhysicalIndex(physicalIndex + REEL_COUNT, false);
         setActivePhysicalIndex(physicalIndex + REEL_COUNT);
         return;
       }
-
       if (physicalIndex > REEL_COUNT * 2) {
         scrollToPhysicalIndex(physicalIndex - REEL_COUNT, false);
         setActivePhysicalIndex(physicalIndex - REEL_COUNT);
@@ -417,9 +444,6 @@ function ReelsMobileCarousel({
   }, []);
 
   useEffect(() => {
-    const track = scrollRef.current;
-    if (!track) return;
-
     requestAnimationFrame(() => {
       scrollToPhysicalIndex(MIDDLE_START, false);
     });
@@ -430,15 +454,12 @@ function ReelsMobileCarousel({
     if (!track) return;
 
     let frame = 0;
-
     const onScroll = () => {
       if (jumpLockRef.current) return;
-
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const closest = findClosestPhysicalIndex();
         setActivePhysicalIndex(closest);
-
         if (closest < REEL_COUNT - 1 || closest > REEL_COUNT * 2) {
           reconcileLoop(closest);
         }
@@ -447,7 +468,6 @@ function ReelsMobileCarousel({
 
     track.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
-
     return () => {
       cancelAnimationFrame(frame);
       track.removeEventListener("scroll", onScroll);
@@ -484,9 +504,7 @@ function ReelsMobileCarousel({
             <ReelCard
               reel={reel}
               isActive={index === activePhysicalIndex}
-              isPlaying={playingId === reel.id}
-              onPlay={() => onPlay(reel.id)}
-              onStop={onStop}
+              onPlay={(poster) => onPlay(reel, poster)}
             />
           </div>
         ))}
@@ -499,11 +517,9 @@ function ReelsMobileCarousel({
             type="button"
             onClick={() => scrollToLogicalIndex(index)}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              index === activeLogicalIndex
-                ? "w-5 bg-accent"
-                : "w-1.5 bg-border hover:bg-accent/40"
+              index === activeLogicalIndex ? "w-5 bg-accent" : "w-1.5 bg-border hover:bg-accent/40"
             }`}
-            aria-label={`Go to reel ${index + 1}`}
+            aria-label={`Go to video ${index + 1}`}
           />
         ))}
       </div>
@@ -511,67 +527,64 @@ function ReelsMobileCarousel({
   );
 }
 
-export default function InstagramReels({ variant = "page" }: InstagramReelsProps) {
-  const [playingId, setPlayingId] = useState<string | null>(null);
+export default function InstagramReels({ variant = "page", reels }: ReelsSectionProps) {
+  const [activeReel, setActiveReel] = useState<{ reel: ReelItem; poster: string } | null>(null);
   const isHome = variant === "home";
 
+  const handlePlay = useCallback((reel: ReelItem, poster: string) => {
+    setActiveReel({ reel, poster });
+  }, []);
+
+  if (reels.length === 0) {
+    if (isHome) return null;
+    return (
+      <section className="bg-background py-24 sm:py-32">
+        <div className="page-container">
+          <EmptyState title="No videos yet" description="Videos added in admin will appear here." />
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section
-      id="reels"
-      className={
-        isHome
-          ? "border-t border-border bg-accent-light/30 pb-8 pt-6 sm:pb-10 sm:pt-8"
-          : "bg-background py-24 sm:py-32"
-      }
-    >
-      <div className="page-container">
-        {isHome ? (
-          <SectionHeader
-            label="Instagram Reels"
-            title="RC Cars in Action"
-            description="Real reel thumbnails — tap play to watch instantly."
-            href={REELS_INSTAGRAM_PROFILE}
-            linkText="Follow Us"
-          />
-        ) : (
-          <SectionHeading
-            label="Instagram"
-            title="Behind the Wheel"
-            description="Tap play to watch reels instantly in the feed."
-          />
-        )}
+    <>
+      <section
+        id="reels"
+        className={
+          isHome
+            ? "border-t border-border bg-accent-light/30 pb-8 pt-6 sm:pb-10 sm:pt-8"
+            : "bg-background py-24 sm:py-32"
+        }
+      >
+        <div className="page-container">
+          {isHome ? (
+            <SectionHeader
+              label="Video Reels"
+              title="RC Cars in Action"
+              description="Watch our latest clips — tap play to watch."
+            />
+          ) : (
+            <SectionHeading
+              label="Videos"
+              title="Behind the Wheel"
+              description="Tap play to watch in full screen."
+            />
+          )}
 
-        <ReelsMobileCarousel
-          playingId={playingId}
-          onPlay={setPlayingId}
-          onStop={() => setPlayingId(null)}
-        />
-        <ReelsDesktopRow
-          playingId={playingId}
-          onPlay={setPlayingId}
-          onStop={() => setPlayingId(null)}
-        />
+          <ReelsMobileCarousel reels={reels} onPlay={handlePlay} />
+          <ReelsDesktopRow reels={reels} onPlay={handlePlay} />
+        </div>
+      </section>
 
-        {!isHome && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: reelEase }}
-            className="mt-14 text-center"
-          >
-            <Link
-              href={REELS_INSTAGRAM_PROFILE}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="luxury-btn-outline group inline-flex"
-            >
-              <InstagramIcon className="h-3.5 w-3.5" />
-              Follow on Instagram
-            </Link>
-          </motion.div>
-        )}
-      </div>
-    </section>
+      <AnimatePresence>
+        {activeReel ? (
+          <ReelPlayerModal
+            reel={activeReel.reel}
+            poster={activeReel.poster || activeReel.reel.thumbnail}
+            onClose={() => setActiveReel(null)}
+          />
+        ) : null}
+      </AnimatePresence>
+    </>
   );
 }

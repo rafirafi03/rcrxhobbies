@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag } from "lucide-react";
-import { useStore } from "@/context/StoreContext";
-import { getCartProducts } from "@/lib/cart";
-import { getProductPath } from "@/lib/products";
-import { formatPrice } from "@/lib/format";
-import QuantitySelector from "@/components/ui/QuantitySelector";
-import { Card, CardBody, CardMedia } from "@/components/ui/Card";
-import AppImage from "@/components/ui/AppImage";
+import { useStore } from "../../context/StoreContext";
+import { useSiteData } from "../../context/SiteDataContext";
+import { getCartProducts } from "../../lib/cart";
+import { getProductPath } from "../../lib/products";
+import { formatPrice } from "../../lib/format";
+import QuantitySelector from "../ui/QuantitySelector";
+import { Card, CardBody, CardMedia } from "../ui/Card";
+import AppImage from "../ui/AppImage";
 
 export default function CartDrawer() {
   const {
@@ -18,10 +19,12 @@ export default function CartDrawer() {
     setCartOpen,
     updateQuantity,
     removeFromCart,
+    clearCheckoutOverride,
     cartCount,
   } = useStore();
+  const { products } = useSiteData();
 
-  const cartProducts = getCartProducts(cart);
+  const cartProducts = getCartProducts(cart, products);
   const subtotal = cartProducts.reduce(
     (sum, i) => sum + i.product.price * i.quantity,
     0
@@ -146,7 +149,10 @@ export default function CartDrawer() {
                 </Link>
                 <Link
                   href="/checkout"
-                  onClick={() => setCartOpen(false)}
+                  onClick={() => {
+                    clearCheckoutOverride();
+                    setCartOpen(false);
+                  }}
                   className="luxury-btn-primary w-full justify-center"
                 >
                   Checkout

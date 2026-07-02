@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { Trash2, ShoppingBag, ArrowRight } from "lucide-react";
-import { useStore } from "@/context/StoreContext";
-import { getCartProducts } from "@/lib/cart";
-import { getProductPath } from "@/lib/products";
-import { formatPrice } from "@/lib/format";
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import QuantitySelector from "@/components/ui/QuantitySelector";
-import { Card, CardBody, CardMedia } from "@/components/ui/Card";
-import AppImage from "@/components/ui/AppImage";
+import { useStore } from "../../context/StoreContext";
+import { useSiteData } from "../../context/SiteDataContext";
+import { getCartProducts } from "../../lib/cart";
+import { getProductPath } from "../../lib/products";
+import { formatPrice } from "../../lib/format";
+import Breadcrumbs from "../ui/Breadcrumbs";
+import QuantitySelector from "../ui/QuantitySelector";
+import { Card, CardBody, CardMedia } from "../ui/Card";
+import AppImage from "../ui/AppImage";
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart } = useStore();
-  const cartProducts = getCartProducts(cart);
+  const { cart, updateQuantity, removeFromCart, clearCart, clearCheckoutOverride } = useStore();
+  const { products } = useSiteData();
+  const cartProducts = getCartProducts(cart, products);
   const subtotal = cartProducts.reduce((s, i) => s + i.product.price * i.quantity, 0);
 
   if (cartProducts.length === 0) {
@@ -107,7 +109,11 @@ export default function CartPage() {
             </div>
           </div>
           <p className="mt-3 text-xs text-muted">Shipping & discounts calculated at checkout</p>
-          <Link href="/checkout" className="luxury-btn-primary mt-6 w-full justify-center">
+          <Link
+            href="/checkout"
+            onClick={clearCheckoutOverride}
+            className="luxury-btn-primary mt-6 w-full justify-center"
+          >
             Proceed to Checkout
             <ArrowRight className="h-4 w-4" />
           </Link>

@@ -1,10 +1,14 @@
-import ProductCard from "@/components/ui/ProductCard";
-import SectionHeading from "@/components/ui/SectionHeading";
-import { getRelatedProducts } from "@/lib/products";
-import type { Product } from "@/types";
+"use client";
+
+import ProductCard from "../ui/ProductCard";
+import SectionHeading from "../ui/SectionHeading";
+import { getRelatedProducts } from "../../lib/products";
+import { useSiteData } from "../../context/SiteDataContext";
+import type { Product } from "../../types";
 
 export default function RelatedProducts({ product }: { product: Product }) {
-  const related = getRelatedProducts(product);
+  const { products } = useSiteData();
+  const related = getRelatedProducts(products, product);
   if (related.length === 0) return null;
 
   return (

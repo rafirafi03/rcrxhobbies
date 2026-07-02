@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import type { Category } from "@/types";
-import { getCategoryPath, getCategoryProductCount } from "@/lib/products";
-import AppImage from "@/components/ui/AppImage";
+import type { Category } from "../../types";
+import { useSiteData } from "../../context/SiteDataContext";
+import { getCategoryPath, getCategoryProductCount } from "../../lib/products";
+import AppImage from "./AppImage";
 import { ArrowRight } from "lucide-react";
 
 interface CategoryCardProps {
@@ -16,7 +19,8 @@ export default function CategoryCard({
   featured = false,
   rounded = false,
 }: CategoryCardProps) {
-  const productCount = getCategoryProductCount(category.slug);
+  const { products, categories } = useSiteData();
+  const productCount = getCategoryProductCount(products, categories, category.slug);
 
   if (featured) {
     return (

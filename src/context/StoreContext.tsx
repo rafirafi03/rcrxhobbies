@@ -8,8 +8,9 @@ import {
   useMemo,
   useState,
 } from "react";
-import { calculateOrderSummary } from "@/lib/cart";
-import type { CartItem } from "@/types";
+import { calculateOrderSummary } from "../lib/cart";
+import type { CartItem } from "../types";
+import { useSiteData } from "./SiteDataContext";
 
 const CART_KEY = "rcrx_cart";
 const WISHLIST_KEY = "rcrx_wishlist";
@@ -25,6 +26,9 @@ interface StoreContextValue {
   searchOpen: boolean;
   setSearchOpen: (open: boolean) => void;
   addToCart: (productId: string, quantity?: number) => void;
+  buyNow: (productId: string, quantity?: number) => void;
+  checkoutOverride: CartItem[] | null;
+  clearCheckoutOverride: () => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -53,6 +57,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [checkoutOverride, setCheckoutOverride] = useState<CartItem[] | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -75,6 +80,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [recentlyViewed, hydrated]);
 
   const addToCart = useCallback((productId: string, quantity = 1) => {
+    setCheckoutOverride(null);
     setCart((prev) => {
       const existing = prev.find((i) => i.productId === productId);
       if (existing) {
@@ -88,6 +94,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
     setCartOpen(true);
   }, []);
+
+  const buyNow = useCallback((productId: string, quantity = 1) => {
+    setCheckoutOverride([{ productId, quantity }]);
+  }, []);
+
+  const clearCheckoutOverride = useCallback(() => setCheckoutOverride(null), []);
 
   const removeFromCart = useCallback((productId: string) => {
     setCart((prev) => prev.filter((i) => i.productId !== productId));
@@ -140,6 +152,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       searchOpen,
       setSearchOpen,
       addToCart,
+      buyNow,
+      checkoutOverride,
+      clearCheckoutOverride,
       removeFromCart,
       updateQuantity,
       clearCart,
@@ -156,6 +171,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       cartOpen,
       searchOpen,
       addToCart,
+      buyNow,
+      checkoutOverride,
+      clearCheckoutOverride,
       removeFromCart,
       updateQuantity,
       clearCart,
@@ -175,7 +193,16 @@ export function useStore() {
   return ctx;
 }
 
+export function useActiveCart() {
+  const { cart, checkoutOverride } = useStore();
+  return checkoutOverride ?? cart;
+}
+
 export function useCartSummary(promoCode?: string) {
-  const { cart } = useStore();
-  return useMemo(() => calculateOrderSummary(cart, promoCode), [cart, promoCode]);
+  const activeCart = useActiveCart();
+  const { products } = useSiteData();
+  return useMemo(
+    () => calculateOrderSummary(activeCart, products, promoCode),
+    [activeCart, products, promoCode]
+  );
 }

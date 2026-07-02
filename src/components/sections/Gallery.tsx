@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ZoomIn } from "lucide-react";
-import SectionHeading from "@/components/ui/SectionHeading";
-import { Card, CardBody, CardMedia } from "@/components/ui/Card";
-import { galleryItems } from "@/data/gallery";
-import AppImage from "@/components/ui/AppImage";
+import SectionHeading from "../ui/SectionHeading";
+import { Card, CardBody, CardMedia } from "../ui/Card";
+import { galleryItems } from "../../data/gallery";
+import AppImage from "../ui/AppImage";
 
 export default function Gallery() {
   const [lightbox, setLightbox] = useState<string | null>(null);

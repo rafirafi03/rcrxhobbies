@@ -20,7 +20,7 @@ export default function ViewToggle({ view, onChange, className = "" }: ViewToggl
         onClick={() => onChange("grid")}
         className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${
           view === "grid"
-            ? "bg-accent text-white shadow-sm"
+            ? "bg-primary text-white shadow-sm"
             : "text-muted hover:bg-neutral-50 hover:text-foreground"
         }`}
         aria-label="Grid view"
@@ -33,7 +33,7 @@ export default function ViewToggle({ view, onChange, className = "" }: ViewToggl
         onClick={() => onChange("list")}
         className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${
           view === "list"
-            ? "bg-accent text-white shadow-sm"
+            ? "bg-primary text-white shadow-sm"
             : "text-muted hover:bg-neutral-50 hover:text-foreground"
         }`}
         aria-label="List view"

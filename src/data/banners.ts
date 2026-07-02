@@ -1,4 +1,4 @@
-import { BANNER_IMG } from "@/lib/images";
+import { BANNER_IMG } from "../lib/images";
 
 export interface HeroBanner {
   id: string;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Store, Search, Heart, ShoppingBag } from "lucide-react";
-import { useStore } from "@/context/StoreContext";
+import { useStore } from "../../context/StoreContext";
 
 function isShopActive(pathname: string) {
   return (

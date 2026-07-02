@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchInstagramReelMedia, validateReelUrl } from "@/lib/instagram";
+import { fetchInstagramReelMedia, validateReelUrl } from "../../../lib/instagram";
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");

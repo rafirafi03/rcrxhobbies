@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -9,12 +11,10 @@ import {
   Users,
   Layers,
 } from "lucide-react";
-import { SITE_CONFIG } from "@/lib/constants";
-import { getWhatsAppChatUrl } from "@/lib/whatsapp";
-import { IMG } from "@/lib/images";
-import AppImage from "@/components/ui/AppImage";
-
-const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SITE_CONFIG.address)}`;
+import { getWhatsAppChatUrl } from "../../lib/whatsapp";
+import { IMG } from "../../lib/images";
+import AppImage from "../ui/AppImage";
+import { useSiteConfig } from "../../context/SiteDataContext";
 
 const experience = [
   { icon: Gauge, title: "Live demos", desc: "Try models in-store" },
@@ -23,18 +23,20 @@ const experience = [
 ];
 
 export default function BrandCTA() {
+  const site = useSiteConfig();
+  const mapsUrl = site.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.address)}`
+    : null;
+
   return (
-    <section
-      className="store-showcase"
-      aria-labelledby="store-showcase-heading"
-    >
+    <section className="store-showcase" aria-labelledby="store-showcase-heading">
       <div className="page-container">
         <div className="store-showcase__shell">
           <div className="store-showcase__card group">
             <div className="store-showcase__visual">
               <AppImage
                 src={IMG.racing}
-                alt="RCRX showroom in Kochi"
+                alt={`${site.name} showroom`}
                 fill
                 sizes="(max-width: 1024px) 100vw, 55vw"
                 className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]"
@@ -53,16 +55,13 @@ export default function BrandCTA() {
               <div className="store-showcase__panel-lines" aria-hidden />
 
               <p className="luxury-label text-xs">RCRX Experience Centre</p>
-              <h2
-                id="store-showcase-heading"
-                className="store-showcase__title luxury-heading mt-2"
-              >
+              <h2 id="store-showcase-heading" className="store-showcase__title luxury-heading mt-2">
                 Experience RC.
                 <span className="text-accent"> In person.</span>
               </h2>
               <p className="store-showcase__lead">
-                Visit our Kochi showroom to explore RC cars and hobby gear with hands-on demos
-                and guidance from the {SITE_CONFIG.name} team.
+                Visit our showroom to explore RC cars and hobby gear with hands-on demos and
+                guidance from the {site.name} team.
               </p>
 
               <dl className="store-showcase__specs">
@@ -71,15 +70,17 @@ export default function BrandCTA() {
                     <MapPin className="h-3.5 w-3.5 text-accent" aria-hidden />
                     Location
                   </dt>
-                  <dd>Kochi, Kerala</dd>
+                  <dd>Kerala, India</dd>
                 </div>
-                <div className="store-showcase__spec">
-                  <dt>
-                    <Clock className="h-3.5 w-3.5 text-accent" aria-hidden />
-                    Hours
-                  </dt>
-                  <dd>{SITE_CONFIG.hours}</dd>
-                </div>
+                {site.hours ? (
+                  <div className="store-showcase__spec">
+                    <dt>
+                      <Clock className="h-3.5 w-3.5 text-accent" aria-hidden />
+                      Hours
+                    </dt>
+                    <dd>{site.hours}</dd>
+                  </div>
+                ) : null}
                 <div className="store-showcase__spec">
                   <dt>
                     <MessageCircle className="h-3.5 w-3.5 text-accent" aria-hidden />
@@ -89,10 +90,12 @@ export default function BrandCTA() {
                 </div>
               </dl>
 
-              <p className="store-showcase__address">
-                <MapPin className="inline h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
-                {SITE_CONFIG.address}
-              </p>
+              {site.address ? (
+                <p className="store-showcase__address">
+                  <MapPin className="inline h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
+                  {site.address}
+                </p>
+              ) : null}
 
               <ul className="store-showcase__experience">
                 {experience.map(({ icon: Icon, title, desc }) => (
@@ -113,24 +116,28 @@ export default function BrandCTA() {
                   Plan your visit
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="luxury-btn-outline store-showcase__btn !border-accent !text-accent hover:!bg-accent hover:!text-white"
-                >
-                  <Navigation className="h-4 w-4" />
-                  Directions
-                </a>
-                <a
-                  href={getWhatsAppChatUrl("Hi, I'd like to visit your Kochi showroom.")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="store-showcase__link"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  WhatsApp us
-                </a>
+                {mapsUrl ? (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="luxury-btn-outline store-showcase__btn !border-primary !text-primary hover:!bg-primary hover:!text-white"
+                  >
+                    <Navigation className="h-4 w-4" />
+                    Directions
+                  </a>
+                ) : null}
+                {site.whatsapp ? (
+                  <a
+                    href={getWhatsAppChatUrl(site.whatsapp, "Hi, I'd like to visit your showroom.")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="store-showcase__link"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp us
+                  </a>
+                ) : null}
               </div>
             </div>
           </div>

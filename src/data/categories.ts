@@ -1,5 +1,5 @@
-import type { Category } from "@/types";
-import { IMG } from "@/lib/images";
+import type { Category } from "../types";
+import { IMG } from "../lib/images";
 
 export const categories: Category[] = [
   {

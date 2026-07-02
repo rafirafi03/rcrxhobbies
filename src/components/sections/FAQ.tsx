@@ -14,8 +14,10 @@ import {
   ChevronDown,
   type LucideIcon,
 } from "lucide-react";
-import { faqs } from "@/data/faq";
-import { getWhatsAppChatUrl } from "@/lib/whatsapp";
+import type { FaqSection } from "../../types";
+import { useSiteConfig } from "../../context/SiteDataContext";
+import { getWhatsAppChatUrl } from "../../lib/whatsapp";
+import { EmptyState } from "../ui/ContentState";
 
 const faqIcons: Record<string, LucideIcon> = {
   order: ShoppingBag,
@@ -106,8 +108,12 @@ function FAQItem({
   );
 }
 
-export default function FAQ() {
-  const [openId, setOpenId] = useState<string | null>(faqs[0]?.id ?? null);
+export default function FAQ({ faq }: { faq?: FaqSection | null }) {
+  const site = useSiteConfig();
+  const items = faq?.items ?? [];
+  const [openId, setOpenId] = useState<string | null>(items[0]?.id ?? null);
+
+  if (items.length === 0) return null;
 
   return (
     <section
@@ -117,29 +123,31 @@ export default function FAQ() {
       <div className="page-container">
         <div className="lg:grid lg:grid-cols-[minmax(0,20rem)_1fr] lg:items-start lg:gap-12 xl:gap-16">
           <div className="mb-8 lg:sticky lg:top-28 lg:mb-0">
-            <p className="luxury-label text-xs sm:text-sm">FAQ</p>
+            <p className="luxury-label text-xs sm:text-sm">{faq?.sectionLabel || "FAQ"}</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Got Questions?
-              <span className="mt-1 block text-accent">We&apos;ve Got Answers</span>
+              {faq?.sectionTitle || "Got Questions?"}
+              <span className="mt-1 block text-accent">{faq?.sectionTitleAccent || "We've Got Answers"}</span>
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-muted sm:text-[0.9375rem]">
-              Quick answers on ordering, delivery, and picking your first RC model.
+              {faq?.sectionDescription || "Quick answers on ordering, delivery, and picking your first RC model."}
             </p>
 
             <p className="mt-5 font-display text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-              {faqs.length} topics · 24/7 WhatsApp
+              {items.length} topics · 24/7 WhatsApp
             </p>
 
             <div className="mt-6 hidden flex-col gap-2.5 lg:flex">
-              <a
-                href={getWhatsAppChatUrl("Hi, I have a question about RCRX Hobbies.")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="luxury-btn-primary justify-center"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Ask on WhatsApp
-              </a>
+              {site.whatsapp ? (
+                <a
+                  href={getWhatsAppChatUrl(site.whatsapp, "Hi, I have a question.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="luxury-btn-primary justify-center"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Ask on WhatsApp
+                </a>
+              ) : null}
               <Link href="/contact" className="luxury-btn-outline justify-center">
                 Contact Us
                 <ArrowRight className="h-4 w-4" />
@@ -148,7 +156,7 @@ export default function FAQ() {
           </div>
 
           <div className="space-y-2.5 sm:space-y-3">
-            {faqs.map((item, index) => (
+            {items.map((item, index) => (
               <FAQItem
                 key={item.id}
                 id={item.id}
@@ -163,7 +171,7 @@ export default function FAQ() {
         </div>
 
         <div className="faq-cta-shell mt-8 lg:hidden">
-          <div className="faq-cta-banner border border-white/20 bg-gradient-to-br from-accent to-accent-hover p-5 text-white">
+          <div className="faq-cta-banner border border-white/20 bg-gradient-to-br from-primary to-accent p-5 text-white">
             <div className="faq-cta-banner__lines" aria-hidden />
             <div className="relative z-[1]">
               <p className="font-display text-xs font-bold tracking-[0.22em] text-white/70 uppercase">
@@ -174,8 +182,9 @@ export default function FAQ() {
                 Message us on WhatsApp — we&apos;ll help you find the right RC setup.
               </p>
               <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
-                <a
-                  href={getWhatsAppChatUrl("Hi, I have a question about RCRX Hobbies.")}
+                {site.whatsapp ? (
+                  <a
+                    href={getWhatsAppChatUrl(site.whatsapp, "Hi, I have a question.")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-accent"
@@ -183,6 +192,7 @@ export default function FAQ() {
                   <MessageCircle className="h-4 w-4" />
                   WhatsApp
                 </a>
+                ) : null}
                 <Link
                   href="/contact"
                   className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm"

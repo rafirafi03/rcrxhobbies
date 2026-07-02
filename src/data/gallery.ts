@@ -1,5 +1,5 @@
-import type { GalleryItem } from "@/types";
-import { RACING_GALLERY } from "@/lib/images";
+import type { GalleryItem } from "../types";
+import { RACING_GALLERY } from "../lib/images";
 
 export const galleryItems: GalleryItem[] = [
   { id: "1", image: RACING_GALLERY[0], title: "Drift Session", category: "Events" },

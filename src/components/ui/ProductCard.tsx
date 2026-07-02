@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, ShoppingBag, Star } from "lucide-react";
-import type { Product } from "@/types";
-import { useStore } from "@/context/StoreContext";
-import { formatPrice, calcDiscountPercent } from "@/lib/format";
-import { getProductPath } from "@/lib/products";
-import WishlistButton from "@/components/ui/WishlistButton";
-import AppImage from "@/components/ui/AppImage";
+import type { Product } from "../../types";
+import { useStore } from "../../context/StoreContext";
+import { formatPrice, calcDiscountPercent } from "../../lib/format";
+import { getProductPath } from "../../lib/products";
+import WishlistButton from "./WishlistButton";
+import AppImage from "./AppImage";
 
 interface ProductCardProps {
   product: Product;
@@ -65,7 +65,7 @@ export default function ProductCard({
             </span>
           )}
           {product.badge && (
-            <span className="absolute top-2 right-2 z-10 rounded-md bg-accent px-1.5 py-0.5 text-[0.625rem] font-bold text-white">
+            <span className="absolute top-2 right-2 z-10 rounded-md bg-primary px-1.5 py-0.5 text-[0.625rem] font-bold text-white">
               {product.badge}
             </span>
           )}
@@ -127,7 +127,7 @@ export default function ProductCard({
                 type="button"
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
-                className="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent text-xs font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-45"
+                className="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-45"
               >
                 <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{product.inStock ? "Add to Cart" : "Sold Out"}</span>
@@ -166,7 +166,7 @@ export default function ProductCard({
             </span>
           )}
           {product.badge && (
-            <span className="w-fit rounded-md bg-accent px-1.5 py-0.5 text-[0.625rem] font-bold text-white shadow-sm">
+            <span className="w-fit rounded-md bg-primary px-1.5 py-0.5 text-[0.625rem] font-bold text-white shadow-sm">
               {product.badge}
             </span>
           )}
@@ -187,7 +187,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={handleAddToCart}
-            className="absolute right-2 bottom-2 flex h-9 w-9 items-center justify-center rounded-full bg-accent text-white shadow-lg transition-transform active:scale-95 sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute right-2 bottom-2 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform active:scale-95 sm:opacity-0 sm:group-hover:opacity-100"
             aria-label={`Add ${product.name} to cart`}
           >
             <ShoppingBag className="h-4 w-4" />
@@ -229,7 +229,7 @@ export default function ProductCard({
             type="button"
             onClick={handleAddToCart}
             disabled={!product.inStock}
-            className="flex h-8 flex-1 items-center justify-center rounded-lg bg-accent text-[0.6875rem] font-semibold text-white disabled:opacity-45"
+            className="flex h-8 flex-1 items-center justify-center rounded-lg bg-primary text-[0.6875rem] font-semibold text-white disabled:opacity-45"
           >
             Cart
           </button>
@@ -247,7 +247,7 @@ export default function ProductCard({
             type="button"
             onClick={handleAddToCart}
             disabled={!product.inStock}
-            className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent text-xs font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-45"
+            className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-45"
           >
             <ShoppingBag className="h-3.5 w-3.5" />
             Add

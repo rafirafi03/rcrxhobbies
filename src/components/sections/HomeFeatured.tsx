@@ -1,12 +1,21 @@
-import ProductCard from "@/components/ui/ProductCard";
-import SectionHeader from "@/components/ui/SectionHeader";
-import InstagramReels from "@/components/sections/InstagramReels";
-import FAQ from "@/components/sections/FAQ";
-import { getFeaturedProducts } from "@/lib/products";
+import ProductCard from "../ui/ProductCard";
+import SectionHeader from "../ui/SectionHeader";
+import InstagramReels from "./InstagramReels";
+import FAQ from "./FAQ";
+import { EmptyState } from "../ui/ContentState";
+import type { FaqSection, Product, ReelItem } from "../../types";
 
-export default function HomeFeatured() {
-  const featured = getFeaturedProducts(8);
-
+export default function HomeFeatured({
+  featuredProducts,
+  latestProducts,
+  reels,
+  faq,
+}: {
+  featuredProducts: Product[];
+  latestProducts: Product[];
+  reels: ReelItem[];
+  faq?: FaqSection | null;
+}) {
   return (
     <>
       <section className="section-y bg-accent-light/50">
@@ -18,11 +27,15 @@ export default function HomeFeatured() {
             href="/shop"
             linkText="View All"
           />
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-            {featured.slice(0, 4).map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
-            ))}
-          </div>
+          {featuredProducts.length === 0 ? (
+            <EmptyState title="No featured products" description="Add products in admin and mark them as featured." actionHref="/shop" actionLabel="Browse shop" />
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+              {featuredProducts.slice(0, 4).map((product, i) => (
+                <ProductCard key={product.id} product={product} index={i} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -35,16 +48,20 @@ export default function HomeFeatured() {
             href="/shop"
             linkText="View More"
           />
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-            {featured.slice(4, 8).map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
-            ))}
-          </div>
+          {latestProducts.length === 0 ? (
+            <EmptyState title="No products yet" description="Products from your admin catalog will appear here." />
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+              {latestProducts.slice(0, 4).map((product, i) => (
+                <ProductCard key={product.id} product={product} index={i} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      <InstagramReels variant="home" />
-      <FAQ />
+      <InstagramReels reels={reels} variant="home" />
+      <FAQ faq={faq} />
     </>
   );
 }

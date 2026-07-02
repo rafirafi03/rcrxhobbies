@@ -1,4 +1,4 @@
-import type { ReelItem } from "@/types";
+import type { ReelItem } from "../types";
 
 /**
  * Instagram reels on the home page.

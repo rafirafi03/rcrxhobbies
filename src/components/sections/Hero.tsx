@@ -1,11 +1,12 @@
-import HeroBanner from "@/components/sections/HeroBanner";
-import HeroQuickActions from "@/components/sections/HeroQuickActions";
-import TrustMarquee from "@/components/sections/TrustMarquee";
+import HeroBanner from "./HeroBanner";
+import HeroQuickActions from "./HeroQuickActions";
+import TrustMarquee from "./TrustMarquee";
+import type { HeroBanner as HeroBannerType } from "../../types";
 
-export default function Hero() {
+export default function Hero({ banners }: { banners: HeroBannerType[] }) {
   return (
     <>
-      <HeroBanner />
+      <HeroBanner banners={banners} />
       <HeroQuickActions />
       <TrustMarquee />
     </>

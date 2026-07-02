@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, Search, ShoppingBag, Heart, MessageCircle, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
-import { SITE_CONFIG } from "@/lib/constants";
-import { getPhoneUrl, getWhatsAppChatUrl } from "@/lib/whatsapp";
-import { useStore } from "@/context/StoreContext";
-import SearchOverlay from "@/components/layout/SearchOverlay";
+import { useSiteConfig } from "../../context/SiteDataContext";
+import { getPhoneUrl, getWhatsAppChatUrl } from "../../lib/whatsapp";
+import { useStore } from "../../context/StoreContext";
+import SearchOverlay from "./SearchOverlay";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -24,6 +24,7 @@ function isActive(pathname: string, href: string) {
 }
 
 export default function Header() {
+  const site = useSiteConfig();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const { cartCount, wishlistCount, setCartOpen, searchOpen, setSearchOpen } = useStore();
@@ -45,7 +46,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-border bg-white shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-border bg-surface/95 shadow-sm backdrop-blur-md">
         <div className="page-container flex items-center gap-3 py-3 lg:justify-between">
           {/* Mobile menu — left */}
           <button
@@ -61,13 +62,13 @@ export default function Header() {
           <Link
             href="/"
             className="flex min-w-0 flex-1 items-center justify-center gap-2.5 lg:flex-none lg:justify-start"
-            aria-label={SITE_CONFIG.name}
+            aria-label={site.name}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
               <span className="text-xs font-bold text-white">RC</span>
             </div>
             <div className="hidden min-w-0 lg:block">
-              <p className="font-display truncate text-lg font-bold text-foreground">{SITE_CONFIG.name}</p>
+              <p className="font-display truncate text-lg font-bold text-foreground">{site.name}</p>
               <p className="text-[0.625rem] font-medium tracking-wide text-muted uppercase">
                 India&apos;s RC Destination
               </p>
@@ -126,7 +127,7 @@ export default function Header() {
             </button>
 
             <Link
-              href={getWhatsAppChatUrl()}
+              href={getWhatsAppChatUrl(site.whatsapp, "Hello! I'd like to know more about your RC collection.")}
               target="_blank"
               rel="noopener noreferrer"
               className="luxury-btn-primary ml-2 !hidden !px-4 !py-2 !text-sm lg:!inline-flex"
@@ -216,14 +217,14 @@ export default function Header() {
 
               <div className="space-y-3 border-t border-border p-4">
                 <a
-                  href={getPhoneUrl()}
+                  href={getPhoneUrl(site.phone)}
                   className="flex min-h-[2.75rem] items-center gap-3 rounded-lg border border-border px-4 text-sm font-medium text-foreground"
                 >
                   <Phone className="h-4 w-4 text-accent" />
-                  {SITE_CONFIG.phoneDisplay}
+                  {site.phoneDisplay}
                 </a>
                 <Link
-                  href={getWhatsAppChatUrl()}
+                  href={getWhatsAppChatUrl(site.whatsapp, "Hello! I'd like to know more about your RC collection.")}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={closeMenu}

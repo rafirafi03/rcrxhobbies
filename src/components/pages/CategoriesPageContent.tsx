@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { categories } from "@/data/categories";
-import CategoryCard from "@/components/ui/CategoryCard";
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import type { Category } from "../../types";
+import CategoryCard from "../ui/CategoryCard";
+import Breadcrumbs from "../ui/Breadcrumbs";
+import { EmptyState } from "../ui/ContentState";
 
-export default function CategoriesPageContent() {
+export default function CategoriesPageContent({ categories }: { categories: Category[] }) {
   return (
     <div className="bg-white">
       <div className="border-b border-border bg-accent-light/20">
@@ -39,11 +40,15 @@ export default function CategoriesPageContent() {
           </Link>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => (
-            <CategoryCard key={category.slug} category={category} featured />
-          ))}
-        </div>
+        {categories.length === 0 ? (
+          <EmptyState title="No categories yet" description="Categories from admin will appear here." />
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-3">
+            {categories.map((category) => (
+              <CategoryCard key={category.slug} category={category} featured />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import { existsSync } from "fs";
 import path from "path";
 import { ultraigdl } from "ultra-igdl";
-import { cacheVideoCdnUrl } from "@/lib/instagram-cache";
-import { getInstagramShortcode, isInstagramReelUrl } from "@/lib/reels";
+import { cacheVideoCdnUrl } from "./instagram-cache";
+import { getInstagramShortcode, isInstagramReelUrl } from "./reels";
 
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";

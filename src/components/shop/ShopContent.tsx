@@ -4,13 +4,13 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Grid3x3 } from "lucide-react";
-import ProductCard from "@/components/ui/ProductCard";
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import ProductListToolbar from "@/components/shop/ProductListToolbar";
-import ShopFiltersPanel, { countActiveFilters } from "@/components/shop/ShopFiltersPanel";
-import ShopFilterDrawer from "@/components/shop/ShopFilterDrawer";
-import { filterProducts, getCategories, getPriceRange, getCategoriesPath } from "@/lib/products";
-import type { ShopFilters, SortOption } from "@/types";
+import ProductCard from "../ui/ProductCard";
+import Breadcrumbs from "../ui/Breadcrumbs";
+import ProductListToolbar from "./ProductListToolbar";
+import ShopFiltersPanel, { countActiveFilters } from "./ShopFiltersPanel";
+import ShopFilterDrawer from "./ShopFilterDrawer";
+import { filterProducts, getCategoryNames, getPriceRange, getCategoriesPath } from "../../lib/catalog";
+import type { Category, Product, ShopFilters, SortOption } from "../../types";
 
 const SORT_OPTIONS: SortOption[] = [
   "featured",
@@ -36,10 +36,16 @@ function buildDefaultFilters(priceRange: { min: number; max: number }): ShopFilt
   };
 }
 
-export default function ShopContent() {
+export default function ShopContent({
+  products: allProducts,
+  categories: categoryList,
+}: {
+  products: Product[];
+  categories: Category[];
+}) {
   const searchParams = useSearchParams();
-  const priceRange = getPriceRange();
-  const categories = ["All", ...getCategories()];
+  const priceRange = getPriceRange(allProducts);
+  const categories = ["All", ...getCategoryNames(allProducts)];
 
   const [filters, setFilters] = useState<ShopFilters>(() => buildDefaultFilters(priceRange));
   const [draftFilters, setDraftFilters] = useState<ShopFilters>(() => buildDefaultFilters(priceRange));
@@ -63,7 +69,7 @@ export default function ShopContent() {
     }
   }, [searchParams]);
 
-  const products = useMemo(() => filterProducts(filters), [filters]);
+  const products = useMemo(() => filterProducts(allProducts, filters), [allProducts, filters]);
 
   const openFilters = useCallback(() => {
     setDraftFilters(filters);

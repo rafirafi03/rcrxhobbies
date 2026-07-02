@@ -3,21 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { useStore, useCartSummary } from "@/context/StoreContext";
-import { getCartProducts } from "@/lib/cart";
-import { getWhatsAppCartOrderUrl } from "@/lib/whatsapp";
-import { PROMO_CODES, SITE_CONFIG } from "@/lib/constants";
-import { formatPrice } from "@/lib/format";
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import OrderSummaryCard from "@/components/shop/OrderSummaryCard";
-import AppImage from "@/components/ui/AppImage";
-import type { CheckoutData } from "@/types";
+import { useStore, useActiveCart, useCartSummary } from "../../context/StoreContext";
+import { useSiteData, useSiteConfig } from "../../context/SiteDataContext";
+import { getCartProducts } from "../../lib/cart";
+import { getWhatsAppCartOrderUrl } from "../../lib/whatsapp";
+import { formatPrice } from "../../lib/format";
+import Breadcrumbs from "../ui/Breadcrumbs";
+import OrderSummaryCard from "./OrderSummaryCard";
+import AppImage from "../ui/AppImage";
+import type { CheckoutData } from "../../types";
 
 export default function CheckoutPage() {
-  const { cart, clearCart } = useStore();
-  const [promoCode, setPromoCode] = useState("");
-  const [promoError, setPromoError] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState("");
+  const { clearCart, checkoutOverride, clearCheckoutOverride } = useStore();
+  const { products } = useSiteData();
+  const site = useSiteConfig();
+  const activeCart = useActiveCart();
   const [form, setForm] = useState<CheckoutData>({
     name: "",
     phone: "",
@@ -30,19 +30,8 @@ export default function CheckoutPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const cartProducts = getCartProducts(cart);
-  const summary = useCartSummary(appliedPromo);
-
-  function applyPromo() {
-    const code = promoCode.trim().toUpperCase();
-    if (!PROMO_CODES[code]) {
-      setPromoError("Invalid promo code");
-      return;
-    }
-    setAppliedPromo(code);
-    setForm((f) => ({ ...f, promoCode: code }));
-    setPromoError("");
-  }
+  const cartProducts = getCartProducts(activeCart, products);
+  const summary = useCartSummary();
 
   function validate() {
     const e: Record<string, string> = {};
@@ -58,9 +47,13 @@ export default function CheckoutPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate() || cartProducts.length === 0) return;
-    const url = getWhatsAppCartOrderUrl(cart, { ...form, promoCode: appliedPromo });
+    const url = getWhatsAppCartOrderUrl(activeCart, products, form, site.whatsapp, site.name);
     window.open(url, "_blank");
-    clearCart();
+    if (checkoutOverride) {
+      clearCheckoutOverride();
+    } else {
+      clearCart();
+    }
   }
 
   if (cartProducts.length === 0) {
@@ -78,7 +71,9 @@ export default function CheckoutPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Cart", href: "/cart" },
+          ...(checkoutOverride
+            ? [{ label: "Shop", href: "/shop" }]
+            : [{ label: "Cart", href: "/cart" }]),
           { label: "Checkout" },
         ]}
       />
@@ -165,32 +160,6 @@ export default function CheckoutPage() {
           </section>
 
           <section>
-            <h2 className="mb-6 text-[0.6875rem] tracking-[0.15em] text-muted uppercase">
-              Promo Code
-            </h2>
-            <div className="flex gap-3">
-              <input
-                className="luxury-input flex-1"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                placeholder="e.g. RCRX10"
-              />
-              <button type="button" onClick={applyPromo} className="luxury-btn-outline !px-6">
-                Apply
-              </button>
-            </div>
-            {promoError && <p className="mt-2 text-xs text-accent">{promoError}</p>}
-            {appliedPromo && (
-              <p className="mt-2 text-xs text-foreground">
-                Applied: {appliedPromo} — {PROMO_CODES[appliedPromo]?.label}
-              </p>
-            )}
-            <p className="mt-2 text-xs text-muted">
-              Try: RCRX10 (10% off) or WELCOME500 (₹500 off orders over ₹5,000)
-            </p>
-          </section>
-
-          <section>
             <label className="mb-2 block text-[0.6875rem] tracking-[0.12em] text-muted uppercase">
               Order Notes
             </label>
@@ -214,7 +183,7 @@ export default function CheckoutPage() {
         </form>
 
         <div className="space-y-6 lg:col-span-2">
-          <OrderSummaryCard summary={summary} />
+          <OrderSummaryCard summary={summary} showShippingNote={false} />
 
           <div className="border border-border p-6 text-sm">
             <h3 className="mb-4 text-[0.6875rem] tracking-[0.15em] text-muted uppercase">
@@ -223,23 +192,18 @@ export default function CheckoutPage() {
             <ul className="space-y-4">
               {cartProducts.map(({ product, quantity }) => (
                 <li key={product.id} className="flex gap-3">
-                  <div className="relative h-14 w-12 shrink-0 overflow-hidden">
+                  <div className="relative h-14 w-12 shrink-0 overflow-hidden rounded-md">
                     <AppImage src={product.image} alt="" fill sizes="48px" className="object-cover" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{product.name}</p>
-                    <p className="text-xs text-muted">Qty: {quantity}</p>
+                    <p className="text-xs text-muted">
+                      Qty: {quantity} · {formatPrice(product.price * quantity)}
+                    </p>
                   </div>
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div className="border border-border p-6 text-xs leading-relaxed text-muted">
-            <p className="mb-2 font-medium text-foreground">Shipping Policy</p>
-            <p>Free shipping on orders over {formatPrice(SITE_CONFIG.freeShippingThreshold)}. Standard delivery 3–5 business days across Kerala.</p>
-            <p className="mt-4 mb-2 font-medium text-foreground">Returns</p>
-            <p>7-day return policy on unopened items. Contact us via WhatsApp for returns and exchanges.</p>
           </div>
         </div>
       </div>

@@ -1,21 +1,25 @@
-import { SITE_CONFIG } from "@/lib/constants";
-import { formatPrice } from "@/lib/format";
+"use client";
 
-const trustItems = [
+import { formatPrice } from "../../lib/format";
+import { SHIPPING_CONFIG } from "../../lib/catalog";
+
+const trustItems = (freeShippingThreshold: number) => [
   "24/7 Support",
   "Secure Payments",
   "Best Prices",
   "RC Expert Support",
   "WhatsApp Ordering",
-  `Free Shipping ${formatPrice(SITE_CONFIG.freeShippingThreshold)}+`,
+  `Free Shipping ${formatPrice(freeShippingThreshold)}+`,
 ];
 
 export default function TrustMarquee() {
+  const items = trustItems(SHIPPING_CONFIG.freeShippingThreshold);
+
   return (
-    <div className="overflow-hidden border-b border-border bg-white py-2">
+    <div className="overflow-hidden border-b border-border bg-surface-soft py-2.5">
       <div className="flex">
         <div className="trust-marquee-track flex shrink-0 items-center">
-          {[...trustItems, ...trustItems].map((item, i) => (
+          {[...items, ...items].map((item, i) => (
             <span
               key={`${item}-${i}`}
               className="flex shrink-0 items-center px-6 text-xs font-medium text-muted"

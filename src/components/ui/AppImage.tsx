@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { FALLBACK_IMAGE } from "@/lib/images";
+import { FALLBACK_IMAGE } from "../../lib/images";
 
 interface AppImageProps {
   src: string;

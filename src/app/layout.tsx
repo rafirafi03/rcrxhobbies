@@ -1,8 +1,8 @@
-import Providers from "@/components/Providers";
+import Providers from "../components/Providers";
 import type { Metadata } from "next";
 import { Barlow, Rajdhani } from "next/font/google";
 import "./globals.css";
-import { SITE_CONFIG } from "@/lib/constants";
+import { getSiteSettings } from "../lib/sanity/queries";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -18,11 +18,26 @@ const rajdhani = Rajdhani({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: `${SITE_CONFIG.name} | ${SITE_CONFIG.tagline}`,
-  description: SITE_CONFIG.description,
-  keywords: ["RC cars", "remote control cars", "drift RC", "off-road RC", "Kochi"],
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const name = settings?.contact.name || "RCRX Hobbies";
+  const tagline = settings?.contact.tagline || "Premium RC Machines";
+  const description =
+    settings?.seo.siteDescription ||
+    "Kerala's premier destination for high-performance remote control machines.";
+
+  return {
+    title: `${name} | ${tagline}`,
+    description,
+    keywords: settings?.seo.keywords?.split(",").map((k) => k.trim()) || [
+      "RC cars",
+      "remote control cars",
+      "drift RC",
+      "off-road RC",
+      "Kochi",
+    ],
+  };
+}
 
 export default function RootLayout({
   children,

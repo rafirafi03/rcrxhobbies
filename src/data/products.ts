@@ -1,5 +1,5 @@
-import type { Product } from "@/types";
-import { IMG } from "@/lib/images";
+import type { Product } from "../types";
+import { IMG } from "../lib/images";
 
 export const products: Product[] = [
   {

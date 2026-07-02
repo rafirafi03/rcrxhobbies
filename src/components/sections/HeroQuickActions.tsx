@@ -1,24 +1,19 @@
 import Link from "next/link";
-import { ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
 
 export default function HeroQuickActions() {
   return (
-    <div className="bg-white pb-3 sm:pb-4">
+    <div className="hero-actions pt-3 sm:pt-4">
       <div className="page-container">
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-          <Link
-            href="/shop"
-            className="luxury-btn-primary min-h-[2.875rem] w-full justify-center !py-3 !text-xs sm:min-h-[3rem] sm:!text-sm"
-          >
-            <ShoppingBag className="h-4 w-4 shrink-0" strokeWidth={2.25} />
-            Shop Now
+        <div className="hero-actions__grid">
+          <Link href="/shop" className="hero-action-btn hero-action-btn--shop">
+            <ShoppingBag className="hero-action-btn__icon h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]" strokeWidth={2.25} />
+            <span>Shop Now</span>
+            <ArrowRight className="hero-action-btn__icon hidden h-3.5 w-3.5 opacity-90 sm:block" strokeWidth={2.5} />
           </Link>
-          <Link
-            href="/shop?sort=newest"
-            className="luxury-btn-outline min-h-[2.875rem] w-full justify-center !border-accent !py-3 !text-xs !text-accent hover:!bg-accent hover:!text-white sm:min-h-[3rem] sm:!text-sm"
-          >
-            <Sparkles className="h-4 w-4 shrink-0" strokeWidth={2.25} />
-            New Arrivals
+          <Link href="/shop?sort=newest" className="hero-action-btn hero-action-btn--new">
+            <Sparkles className="hero-action-btn__icon h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]" strokeWidth={2.25} />
+            <span>New Arrivals</span>
           </Link>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpDown, Check, ChevronDown } from "lucide-react";
-import type { SelectOption } from "@/components/ui/UiSelect";
+import type { SelectOption } from "./UiSelect";
 
 interface SortDropdownProps<T extends string = string> {
   value: T;

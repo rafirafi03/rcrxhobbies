@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCachedVideoCdnUrl } from "@/lib/instagram-cache";
+import { getCachedVideoCdnUrl } from "../../../../lib/instagram-cache";
 import {
+  fetchInstagramReelMedia,
   INSTAGRAM_VIDEO_HEADERS,
   resolveInstagramVideoCdnUrl,
   validateReelUrl,
-} from "@/lib/instagram";
+} from "../../../../lib/instagram";
 
 export async function GET(request: NextRequest) {
   const reelUrl = request.nextUrl.searchParams.get("url");
@@ -13,7 +14,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid Instagram URL" }, { status: 400 });
   }
 
-  let videoUrl = getCachedVideoCdnUrl(reelUrl) ?? (await resolveInstagramVideoCdnUrl(reelUrl));
+  let videoUrl = getCachedVideoCdnUrl(reelUrl);
+  if (!videoUrl) {
+    await fetchInstagramReelMedia(reelUrl);
+    videoUrl = getCachedVideoCdnUrl(reelUrl) ?? (await resolveInstagramVideoCdnUrl(reelUrl));
+  }
 
   if (!videoUrl) {
     return NextResponse.json({ error: "Video not available" }, { status: 404 });
@@ -52,6 +57,7 @@ export async function GET(request: NextRequest) {
     }
 
     responseHeaders.set("cache-control", "public, max-age=3600");
+    responseHeaders.set("accept-ranges", "bytes");
 
     return new NextResponse(upstream.body, {
       status: upstream.status,

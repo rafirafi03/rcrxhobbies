@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import AppImage from "@/components/ui/AppImage";
+import AppImage from "./AppImage";
 
 interface PageHeroProps {
   label: string;
@@ -32,12 +32,12 @@ export default function PageHero({
             transition={{ duration: 0.7 }}
             className="max-w-2xl"
           >
-            <p className="luxury-label text-blue-200">{label}</p>
+            <p className="luxury-label text-white/70">{label}</p>
             <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
               {title}
             </h1>
             {description && (
-              <p className="mt-4 text-sm leading-relaxed text-blue-100 sm:text-base">{description}</p>
+              <p className="mt-4 text-sm leading-relaxed text-white/85 sm:text-base">{description}</p>
             )}
           </motion.div>
         </div>

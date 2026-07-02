@@ -33,17 +33,27 @@ export function isDirectVideoUrl(url: string): boolean {
   );
 }
 
+export function getReelVideoSrc(reel: { reelUrl?: string; videoUrl?: string }): string | null {
+  const direct = reel.videoUrl?.trim();
+  if (direct && isDirectVideoUrl(direct) && !isInstagramReelUrl(direct)) {
+    return direct;
+  }
+
+  if (reel.reelUrl && isInstagramReelUrl(reel.reelUrl)) {
+    return `/api/instagram-reel/video?url=${encodeURIComponent(reel.reelUrl.trim())}`;
+  }
+
+  return direct || null;
+}
+
 /** Resolve what to play on-site: native video preferred, then Instagram embed. */
 export function getReelPlayback(
   reel: { reelUrl?: string; videoUrl?: string },
   resolvedVideoUrl?: string | null
 ): { type: "video"; src: string } | { type: "instagram"; embedUrl: string; openUrl: string } | null {
-  const candidates = [resolvedVideoUrl, reel.videoUrl?.trim()].filter(Boolean) as string[];
-
-  for (const src of candidates) {
-    if (isDirectVideoUrl(src) && !isInstagramReelUrl(src)) {
-      return { type: "video", src };
-    }
+  const videoSrc = getReelVideoSrc({ ...reel, videoUrl: resolvedVideoUrl ?? reel.videoUrl });
+  if (videoSrc) {
+    return { type: "video", src: videoSrc };
   }
 
   if (reel.reelUrl) {

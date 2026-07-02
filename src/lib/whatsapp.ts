@@ -1,15 +1,16 @@
-import { SITE_CONFIG } from "./constants";
 import { formatPrice } from "./format";
 import { getCartProducts, calculateOrderSummary, formatOrderSummaryLines } from "./cart";
-import { getProductById } from "./products";
-import type { CartItem, CheckoutData } from "@/types";
+import { getProductById } from "./catalog";
+import type { CartItem, CheckoutData, Product } from "../types";
 
 export function buildCartOrderMessage(
   items: CartItem[],
-  checkout: CheckoutData
+  products: Product[],
+  checkout: CheckoutData,
+  storeName: string
 ): string {
-  const cartProducts = getCartProducts(items);
-  const summary = calculateOrderSummary(items, checkout.promoCode);
+  const cartProducts = getCartProducts(items, products);
+  const summary = calculateOrderSummary(items, products, checkout.promoCode);
 
   const lines = [
     "🏎️ *NEW RC STORE ORDER*",
@@ -53,7 +54,7 @@ export function buildCartOrderMessage(
 
   lines.push(
     "",
-    `✅ Order via ${SITE_CONFIG.name} Store`,
+    `✅ Order via ${storeName} Store`,
     `📅 ${new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}`
   );
 
@@ -62,21 +63,26 @@ export function buildCartOrderMessage(
 
 export function getWhatsAppCartOrderUrl(
   items: CartItem[],
-  checkout: CheckoutData
+  products: Product[],
+  checkout: CheckoutData,
+  whatsapp: string,
+  storeName: string
 ): string {
-  const message = encodeURIComponent(buildCartOrderMessage(items, checkout));
-  return `https://wa.me/${SITE_CONFIG.whatsapp}?text=${message}`;
+  const message = encodeURIComponent(buildCartOrderMessage(items, products, checkout, storeName));
+  return `https://wa.me/${whatsapp}?text=${message}`;
 }
 
 export function buildQuickOrderMessage(
   productId: string,
+  products: Product[],
   quantity: number,
   name: string,
   phone: string,
   address: string,
+  storeName: string,
   notes?: string
 ): string {
-  const product = getProductById(productId);
+  const product = getProductById(products, productId);
   if (!product) return "";
 
   const total = product.price * quantity;
@@ -94,16 +100,16 @@ export function buildQuickOrderMessage(
   ];
 
   if (notes?.trim()) lines.push(`• Notes: ${notes.trim()}`);
-  lines.push("", `✅ ${SITE_CONFIG.name}`);
+  lines.push("", `✅ ${storeName}`);
 
   return lines.join("\n");
 }
 
-export function getWhatsAppChatUrl(message?: string): string {
+export function getWhatsAppChatUrl(whatsapp: string, message?: string): string {
   const text = message ? `?text=${encodeURIComponent(message)}` : "";
-  return `https://wa.me/${SITE_CONFIG.whatsapp}${text}`;
+  return `https://wa.me/${whatsapp}${text}`;
 }
 
-export function getPhoneUrl(): string {
-  return `tel:${SITE_CONFIG.phone}`;
+export function getPhoneUrl(phone: string): string {
+  return `tel:${phone}`;
 }

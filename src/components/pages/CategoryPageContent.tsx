@@ -3,17 +3,12 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import ProductCard from "@/components/ui/ProductCard";
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import ProductListToolbar from "@/components/shop/ProductListToolbar";
-import { getProductsByCategorySlug, getCategoriesPath } from "@/lib/products";
-import type { SortOption } from "@/types";
-
-interface CategoryPageProps {
-  slug: string;
-  name: string;
-  description: string;
-}
+import ProductCard from "../ui/ProductCard";
+import Breadcrumbs from "../ui/Breadcrumbs";
+import ProductListToolbar from "../shop/ProductListToolbar";
+import { getCategoriesPath } from "../../lib/products";
+import { EmptyState } from "../ui/ContentState";
+import type { Category, Product, SortOption } from "../../types";
 
 function sortList<T extends { price: number; name: string; rating: number }>(
   list: T[],
@@ -35,74 +30,77 @@ function sortList<T extends { price: number; name: string; rating: number }>(
 }
 
 export default function CategoryPageContent({
-  slug,
-  name,
-  description,
-}: CategoryPageProps) {
+  category,
+  products: categoryProducts,
+}: {
+  category: Category;
+  products: Product[];
+  categories: Category[];
+}) {
   const [sort, setSort] = useState<SortOption>("featured");
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const products = useMemo(
-    () => sortList(getProductsByCategorySlug(slug), sort),
-    [slug, sort]
-  );
+  const products = useMemo(() => sortList(categoryProducts, sort), [categoryProducts, sort]);
 
   return (
     <div className="bg-white">
       <div className="border-b border-border bg-accent-light/20">
-        <div className="page-container py-4 sm:py-8 lg:py-12">
-          <div className="hidden sm:block">
-            <Breadcrumbs
-              items={[
-                { label: "Home", href: "/" },
-                { label: "Shop", href: "/shop" },
-                { label: "Categories", href: getCategoriesPath() },
-                { label: name },
-              ]}
-            />
-          </div>
-          <p className="luxury-label mt-0 text-xs sm:mt-4">Category</p>
-          <h1 className="luxury-heading mt-1 text-xl sm:mt-2 sm:text-3xl lg:text-5xl">{name}</h1>
-          <p className="mt-2 hidden max-w-lg text-sm text-muted sm:block sm:text-base">
-            {description}
-          </p>
+        <div className="page-container py-8 sm:py-10 lg:py-12">
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Shop", href: "/shop" },
+              { label: "Categories", href: getCategoriesPath() },
+              { label: category.name },
+            ]}
+          />
+          <p className="luxury-label mt-4">{category.name}</p>
+          <h1 className="luxury-heading mt-2 text-3xl sm:text-4xl lg:text-5xl">{category.name}</h1>
+          {category.description ? (
+            <p className="mt-3 max-w-2xl text-sm text-muted sm:text-base">{category.description}</p>
+          ) : null}
         </div>
       </div>
 
-      <div className="page-container py-4 lg:py-14">
+      <div className="page-container py-8 sm:py-12">
         <ProductListToolbar
           count={products.length}
           sort={sort}
           onSortChange={setSort}
           view={view}
           onViewChange={setView}
-          extraLink={{ href: getCategoriesPath(), label: "All categories" }}
         />
 
         {products.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border py-16 text-center sm:py-20">
-            <p className="luxury-heading text-xl sm:text-2xl">No products in this category yet</p>
-            <Link
-              href="/shop"
-              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
-            >
-              Browse all products
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        ) : view === "grid" ? (
-          <div className="grid grid-cols-2 gap-x-2 gap-y-6 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
-            ))}
-          </div>
+          <EmptyState
+            title="No products in this category"
+            description="Products assigned to this category in admin will show up here."
+            actionHref="/shop"
+            actionLabel="Browse all products"
+          />
         ) : (
-          <div className="space-y-3 sm:space-y-4">
+          <div
+            className={
+              view === "grid"
+                ? "grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4"
+                : "flex flex-col gap-4"
+            }
+          >
             {products.map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} variant="list" />
+              <ProductCard key={product.id} product={product} index={i} variant={view} />
             ))}
           </div>
         )}
+
+        <div className="mt-10 text-center">
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"
+          >
+            View all products
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </div>
   );

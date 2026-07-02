@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ArrowRight } from "lucide-react";
-import { searchProducts, getProductPath } from "@/lib/products";
-import { formatPrice } from "@/lib/format";
-import AppImage from "@/components/ui/AppImage";
+import { useSiteData } from "../../context/SiteDataContext";
+import { searchProducts, getProductPath } from "../../lib/products";
+import { formatPrice } from "../../lib/format";
+import AppImage from "../ui/AppImage";
 
 interface SearchOverlayProps {
   open: boolean;
@@ -14,9 +15,10 @@ interface SearchOverlayProps {
 }
 
 export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
+  const { products } = useSiteData();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const results = query.trim() ? searchProducts(query).slice(0, 6) : [];
+  const results = query.trim() ? searchProducts(products, query).slice(0, 6) : [];
 
   useEffect(() => {
     if (open) {

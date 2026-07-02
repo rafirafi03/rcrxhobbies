@@ -1,10 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { MapPin, Phone, Mail, ArrowUpRight } from "lucide-react";
-import InstagramIcon from "@/components/ui/InstagramIcon";
-import { SITE_CONFIG } from "@/lib/constants";
-import { getPhoneUrl, getWhatsAppChatUrl } from "@/lib/whatsapp";
-import { categories } from "@/data/categories";
-import { getCategoryPath } from "@/lib/products";
+import InstagramIcon from "../ui/InstagramIcon";
+import { useSiteConfig, useSiteData } from "../../context/SiteDataContext";
+import { getPhoneUrl, getWhatsAppChatUrl } from "../../lib/whatsapp";
+import { getCategoryPath } from "../../lib/products";
 
 const footerLinks = [
   { label: "Home", href: "/" },
@@ -17,23 +18,24 @@ const footerLinks = [
 ];
 
 export default function Footer() {
+  const site = useSiteConfig();
+  const { categories } = useSiteData();
+
   return (
     <footer className="border-t border-border bg-slate-900 pb-20 text-slate-300 lg:pb-0">
       <div className="page-container py-12 sm:py-16">
         <div className="grid gap-10 sm:gap-12 md:grid-cols-12">
           <div className="md:col-span-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <span className="text-xs font-bold text-white">RC</span>
               </div>
               <div>
-                <p className="font-display text-lg font-bold text-white">{SITE_CONFIG.name}</p>
-                <p className="text-xs text-slate-400">Premium RC Hobbies</p>
+                <p className="font-display text-lg font-bold text-white">{site.name}</p>
+                <p className="text-xs text-slate-400">{site.tagline}</p>
               </div>
             </div>
-            <p className="mt-5 max-w-xs text-sm leading-relaxed text-slate-400">
-              {SITE_CONFIG.description}
-            </p>
+            <p className="mt-5 max-w-xs text-sm leading-relaxed text-slate-400">{site.description}</p>
           </div>
 
           <div className="md:col-span-2">
@@ -72,37 +74,52 @@ export default function Footer() {
           <div className="md:col-span-3">
             <p className="mb-4 text-sm font-semibold text-white">Contact</p>
             <ul className="space-y-2.5 text-sm text-slate-400">
-              <li>
-                <a href={getPhoneUrl()} className="flex items-center gap-2 hover:text-white">
-                  <Phone className="h-3.5 w-3.5" /> {SITE_CONFIG.phoneDisplay}
-                </a>
-              </li>
-              <li>
-                <a href={getWhatsAppChatUrl()} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white">
-                  WhatsApp Inquiry
-                </a>
-              </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                {SITE_CONFIG.address}
-              </li>
-              <li>
-                <a href={`mailto:${SITE_CONFIG.email}`} className="flex items-center gap-2 hover:text-white">
-                  <Mail className="h-3.5 w-3.5" /> {SITE_CONFIG.email}
-                </a>
-              </li>
-              <li>
-                <a href={SITE_CONFIG.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white">
-                  <InstagramIcon className="h-3.5 w-3.5" /> @rcrxhobbies
-                </a>
-              </li>
+              {site.phone ? (
+                <li>
+                  <a href={getPhoneUrl(site.phone)} className="flex items-center gap-2 hover:text-white">
+                    <Phone className="h-3.5 w-3.5" /> {site.phoneDisplay}
+                  </a>
+                </li>
+              ) : null}
+              {site.whatsapp ? (
+                <li>
+                  <a
+                    href={getWhatsAppChatUrl(site.whatsapp)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 hover:text-white"
+                  >
+                    WhatsApp Inquiry
+                  </a>
+                </li>
+              ) : null}
+              {site.address ? (
+                <li className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  {site.address}
+                </li>
+              ) : null}
+              {site.email ? (
+                <li>
+                  <a href={`mailto:${site.email}`} className="flex items-center gap-2 hover:text-white">
+                    <Mail className="h-3.5 w-3.5" /> {site.email}
+                  </a>
+                </li>
+              ) : null}
+              {site.instagram ? (
+                <li>
+                  <a href={site.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white">
+                    <InstagramIcon className="h-3.5 w-3.5" /> Instagram
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </div>
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-slate-800 pt-8 sm:flex-row">
           <p className="text-xs text-slate-500">
-            © {new Date().getFullYear()} {SITE_CONFIG.name}. All rights reserved.
+            © {new Date().getFullYear()} {site.name}. All rights reserved.
           </p>
           <p className="text-xs text-slate-500">White · Blue · Precision</p>
         </div>

@@ -1,12 +1,13 @@
-import CategoriesPageContent from "@/components/pages/CategoriesPageContent";
+import CategoriesPageContent from "../../../components/pages/CategoriesPageContent";
+import { getAllCategories } from "../../../lib/sanity/queries";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Categories | RCRX Hobbies",
-  description:
-    "Browse RC car categories — Drift, Off-Road, On-Road, Rock Crawler, Mini RC, and Nitro machines.",
+  description: "Browse RC cars by category — drift, off-road, crawlers, mini RC, and more.",
 };
 
-export default function CategoriesPage() {
-  return <CategoriesPageContent />;
+export default async function CategoriesPage() {
+  const categories = await getAllCategories();
+  return <CategoriesPageContent categories={categories} />;
 }
